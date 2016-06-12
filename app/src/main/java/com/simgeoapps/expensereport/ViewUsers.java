@@ -29,6 +29,9 @@ import java.util.List;
  */
 public class ViewUsers extends ListActivity {
 
+    // non-persisent shared config
+    private GlobalConfig gc;
+
     /** User data source. */
     private UserDao uSource;
 
@@ -113,57 +116,50 @@ public class ViewUsers extends ListActivity {
     /**
      * Class to asynchronously retrieve users from database.
      */
-    private class GetUsers extends AsyncTask<Void, Void, List<User>> {
-        @Override
-        protected List<User> doInBackground(Void... params) {
-            // get all users from db
-            return uSource.getAllUsers();
-        }
+    private void populateListView() {
+        List<User> list = gc.getUserList();
+        final ArrayAdapter<User> adapter = new ArrayAdapter<>(ViewUsers.this,
+                android.R.layout.simple_list_item_activated_1, list);
 
-        @Override
-        protected void onPostExecute(List<User> result) {
-            final ArrayAdapter<User> adapter = new ArrayAdapter<>(ViewUsers.this,
-                    android.R.layout.simple_list_item_activated_1, result);
-            setListAdapter(adapter);
+        setListAdapter(adapter);
 
-            final ListView lv = getListView();
-            // set item onclick listener to each item in list, to launch categories activity
-            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    // retrieve selected user
-                    User us = adapter.getItem(i);
+        final ListView lv = getListView();
+        // set item onclick listener to each item in list, to launch categories activity
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // retrieve selected user
+                User us = adapter.getItem(i);
 
-                    // set selected user in config
-                    GlobalConfig gc = (GlobalConfig) getApplication();
-                    gc.setCurrentUser(us);
+                // remember selected user in config
+                gc.setCurUser(us);
 
-                    // start ViewCategories activity
-                    Intent intent = new Intent(ViewUsers.this, ViewCategories.class);
-                    startActivity(intent);
-                }
-            });
-
-            // set long click listener, to display CAB
-            lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                // Called when the user long-clicks on an item
-                public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
-                    if (aMode != null) {
-                        return false;
-                    }
-                    lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-                    // mark item at position i as selected
-                    lv.setItemChecked(i, true);
-                    // Start the CAB using the ActionMode.Callback defined above
-                    aMode = ViewUsers.this.startActionMode(mActionModeCallback);
-                    return true;
-                }
-            });
-
-            // prompt user for name if no users exist
-            if (result.size() == 0) {
-                addUser();
+                // start ViewExpensesByTime activity
+                Intent intent = new Intent(ViewUsers.this, ViewExpensesByTime.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
             }
+        });
+
+        // set long click listener, to display CAB
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            // Called when the user long-clicks on an item
+            public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
+                if (aMode != null) {
+                    return false;
+                }
+                lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+                // mark item at position i as selected
+                lv.setItemChecked(i, true);
+                // Start the CAB using the ActionMode.Callback defined above
+                aMode = ViewUsers.this.startActionMode(mActionModeCallback);
+                return true;
+            }
+        });
+
+        // prompt user for name if no users exist
+        if (list.size() == 0) {
+            addUser();
         }
     }
 
@@ -173,18 +169,15 @@ public class ViewUsers extends ListActivity {
     private class AddUser extends AsyncTask<String, Void, User> {
         @Override
         protected User doInBackground(String... params) {
+            // add row to table
             User newU = uSource.newUser(params[0]);
+            gc.refreshUserCache();
 
-            // create template
+            // create a default category
             // open data source for categories
             CategoryDao cSource = new CategoryDao(ViewUsers.this);
             cSource.open();
-            cSource.newCategory("Rent", newU);
-            cSource.newCategory("Bills", newU);
-            cSource.newCategory("Groceries", newU);
-            cSource.newCategory("Eating out", newU);
-            cSource.newCategory("Shopping", newU);
-            cSource.newCategory("Gas", newU);
+            cSource.newCategory("Cash", newU);
             cSource.close();
 
             return newU;
@@ -195,13 +188,17 @@ public class ViewUsers extends ListActivity {
             // get adapter
             @SuppressWarnings("unchecked")
             ArrayAdapter<User> adapter = (ArrayAdapter<User>) getListAdapter();
-            // add new user to adapter and update view
-            adapter.add(result);
             adapter.notifyDataSetChanged();
 
-            // click on the added user
-            int pos = adapter.getPosition(result); // get position
-            getListView().performItemClick(null, pos, adapter.getItemId(pos));
+            // find the added user by matching user_id
+            List<User> users = gc.getUserList();
+            for(int i = 0; i < users.size(); i++) {
+                if (result.getId().equals(users.get(i).getId())) {
+                    // click on it
+                    getListView().performItemClick(null, i, adapter.getItemId(i));
+                    break;
+                }
+            }
         }
     }
 
@@ -211,7 +208,10 @@ public class ViewUsers extends ListActivity {
     private class EditUser extends AsyncTask<User, Void, User> {
         @Override
         protected User doInBackground(User... params) {
-            return uSource.editUser(params[0]);
+            // change table
+            User user = uSource.editUser(params[0]);
+            gc.refreshUserCache();
+            return user;
         }
 
         @Override
@@ -229,14 +229,16 @@ public class ViewUsers extends ListActivity {
     private class DeleteUser extends AsyncTask<User, Void, User> {
         @Override
         protected User doInBackground(User... params) {
-            return uSource.deleteUser(params[0]);
+            // change table
+            User user = uSource.deleteUser(params[0]);
+            gc.refreshUserCache();
+            return user;
         }
 
         @Override
         protected void onPostExecute(User result) {
             @SuppressWarnings("unchecked")
             ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-            aa.remove(result); // remove from adapter
             aa.notifyDataSetChanged(); // update view
         }
     }
@@ -292,6 +294,8 @@ public class ViewUsers extends ListActivity {
                 // perform checks and add only if pass
                 if (username.equals("")) { // must not be empty
                     enterName.setError("Please enter a name.");
+                } else if (username.indexOf('"') >= 0) {
+                    enterName.setError("Double-quote character not permitted");
                 } else if (uSource.exists(username)) { // must not exist
                     enterName.setError("This user already exists.");
                 } else {
@@ -361,6 +365,8 @@ public class ViewUsers extends ListActivity {
                 // perform checks and add only if pass
                 if (username.equals("")) { // must not be empty
                     enterName.setError("Please enter a name.");
+                } else if (username.indexOf('"') >= 0) {
+                    enterName.setError("Double-quote character not permitted");
                 } else if (uSource.exists(username)) { // must not exist
                     enterName.setError("This user already exists.");
                 } else {
@@ -412,17 +418,33 @@ public class ViewUsers extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_users);
 
+//        // set selected user in config
+//        GlobalConfig gc = (GlobalConfig) getApplication();
+//        if (gc.getCurUser() != null) {
+//            new Handler().post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    // start ViewCategories activity
+//                    Intent intent = new Intent(ViewUsers.this, ViewExpensesByTime.class);
+//                    startActivity(intent);
+//                }
+//            });
+//        }
+
+        gc = (GlobalConfig)getApplication();
+
         // open data source
         uSource = new UserDao(this);
-        uSource.open();
-        // retrieve users asynchronously
-        new GetUsers().execute();
+//        uSource.open();
+//        // retrieve users asynchronously
+//        new GetUsers().execute();
     }
 
     @Override
     protected void onResume() {
-        uSource.open();
         super.onResume();
+        uSource.open();
+        populateListView();
     }
 
     @Override
@@ -441,8 +463,6 @@ public class ViewUsers extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_new) {
             addUser();
             return true;

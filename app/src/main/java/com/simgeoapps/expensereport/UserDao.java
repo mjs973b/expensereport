@@ -21,8 +21,10 @@ public class UserDao {
     private ExpenseData dbHelper;
 
     // columns
-    private String[] colsToReturn = { ExpenseData.USER_ID,
-            ExpenseData.USER_NAME };
+    private String[] colsToReturn = {
+            ExpenseData.USER_ID,
+            ExpenseData.USER_NAME
+    };
 
     // constructor creates an instance of the helper class
     public UserDao(Context context) {
@@ -32,6 +34,11 @@ public class UserDao {
     // methods to open and close DB
     public void open() throws SQLException {
         database = dbHelper.getWritableDatabase();
+    }
+
+    // methods to open and close DB
+    public void openReadonly() throws SQLException {
+        database = dbHelper.getReadableDatabase();
     }
 
     public void close() {
@@ -63,19 +70,14 @@ public class UserDao {
         // watch for unique constraint exception
         try {
             // returns column position, or -1 if fail
-            long insertId = database.insert(ExpenseData.USERS_TABLE, null, cv);
+            int insertId = (int)database.insert(ExpenseData.USERS_TABLE, null, cv);
 
-            // query db to get id and return added user
-            Cursor cursor = database.query(ExpenseData.USERS_TABLE, colsToReturn, ExpenseData.USER_ID +
-                    " = " + insertId, null, null, null, null);
+//            // query db to get id and return added user
+//            Cursor cursor = database.query(ExpenseData.USERS_TABLE, colsToReturn, ExpenseData.USER_ID +
+//                    " = " + insertId, null, null, null, null);
 
             if (insertId > 0) {
-                cursor.moveToFirst();
-                User us = new User();
-                us.setId(cursor.getInt(0));
-                us.setName(cursor.getString(1));
-                cursor.close();
-                return us;
+                return new User(new UserId(insertId), name);
             } else {
                 return null; // insertion failed
             }
@@ -117,21 +119,20 @@ public class UserDao {
      * @return The list of retrieved users.
      */
     public List<User> getAllUsers() {
-        List<User> ans = new ArrayList<>();
+        List<User> users = new ArrayList<>();
 
-        // query db and get all users
-        Cursor res = database.query(ExpenseData.USERS_TABLE, colsToReturn, null, null, null, null, null);
+        String sql = "select user_id,name from users order by name asc";
+        Cursor res = database.rawQuery(sql, null);
 
         res.moveToFirst();
         while (!res.isAfterLast()) {
-            User u = new User();
-            u.setId(res.getInt(0)); // get id
-            u.setName(res.getString(1)); // get name
-            ans.add(u);
+            int id = res.getInt(0);
+            String name = res.getString(1);
+            users.add(new User(new UserId(id), name));
             res.moveToNext();
         }
 
         res.close();
-        return ans;
+        return users;
     }
 }

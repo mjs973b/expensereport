@@ -3,41 +3,46 @@ package com.simgeoapps.expensereport;
 import java.io.Serializable;
 
 /**
- * Category model.
+ * Category model. id is immutable.
  */
-public class Category implements Serializable{
+public class Category implements Serializable {
+    public static final int SHOW_ALL_CAT_ID = 999;
+    public static final Category SHOW_ALL = new Category(new CatId(SHOW_ALL_CAT_ID), "All Categories");
+
     // fields corresponding to the category table columns
-    private int id;
-    private int userId;
-    private String category;
+    private CatId id;
+    private String name;
 
-    // fields getters and setters
-    public String getCategory() {
-        return category;
+//    public Category() {
+//        this.id = new CatId(0);     // invalid
+//        this.name = "_invalid";
+//    }
+
+    public Category(CatId id, String name) {
+        this.id = id;
+        this.name = name.replace('"', '_');
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public String getName() {
+        return name;
     }
 
-    public int getUserID() {
-        return userId;
+    /** silently replace double-quote with underscore */
+    public void setName(String name) {
+        this.name = name.replace('"', '_');
     }
 
-    public void setUserId(int userID) {
-        this.userId = userID;
-    }
-
-    public int getId() {
+    public CatId getId() {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+//    public void setId(CatId id) {
+//        this.id = id;
+//    }
 
     @Override
     public String toString() {
-        return category;
+        return name;
     }
+
 }

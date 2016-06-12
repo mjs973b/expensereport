@@ -1,43 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.simgeoapps.expensereport" >
-
+    package="com.simgeoapps.expensereport">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
-        android:name="com.simgeoapps.expensereport.GlobalConfig"
+        android:name=".GlobalConfig"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:logo="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:logo="@drawable/ic_launcher"
+        android:theme="@style/AppTheme">
         <activity
-            android:name="com.simgeoapps.expensereport.Splash"
-            android:label="@string/title_activity_launch_test"
+            android:name=".Splash"
             android:configChanges="orientation"
-            android:screenOrientation="portrait"
-            >
+            android:label="@string/title_activity_launch_test"
+            android:screenOrientation="portrait">
             <intent-filter> <!-- put launcher title here, else inherit from parent activity -->
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.simgeoapps.expensereport.ViewExpenses"
+            android:name=".ViewExpenses"
+            android:configChanges="orientation"
             android:label="@string/title_activity_view_expenses"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:parentActivityName=".ViewCategories"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ViewCategories">
+            </meta-data>
         </activity>
         <activity
-            android:name="com.simgeoapps.expensereport.ViewCategories"
+            android:name=".ViewExpensesByTime"
+            android:configChanges="orientation"
+            android:label="@string/title_view_all_expenses"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity
+            android:name=".ViewCategories"
+            android:configChanges="orientation"
             android:label="@string/title_activity_view_categories"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:parentActivityName=".ViewExpensesByTime"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ViewExpensesByTime">
+            </meta-data>
         </activity>
         <activity
-            android:name="com.simgeoapps.expensereport.ViewUsers"
-            android:label="@string/title_activity_view_users"
+            android:name=".ViewUsers"
             android:configChanges="orientation"
-            android:screenOrientation="portrait" >
+            android:label="@string/title_activity_view_users"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".ViewExpensesByTime"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ViewExpensesByTime">
+            </meta-data>
         </activity>
+        <activity
+            android:name=".EditExp"
+            android:configChanges="orientation"
+            android:label="@string/title_activity_edit_exp"
+            android:screenOrientation="portrait"
+            />
     </application>
 
 </manifest>

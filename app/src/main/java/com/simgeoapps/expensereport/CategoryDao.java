@@ -20,8 +20,11 @@ public class CategoryDao {
     private ExpenseData dbHelper;
 
     // columns
-    private String[] colsToReturn = { ExpenseData.CATEGORY_ID, ExpenseData.USER_ID,
-            ExpenseData.CATEGORY_NAME };
+    private String[] colsToReturn = {
+            ExpenseData.CATEGORY_ID,
+            ExpenseData.USER_ID,
+            ExpenseData.CATEGORY_NAME
+    };
 
     public CategoryDao(Context context) {
         dbHelper = new ExpenseData(context);
@@ -30,6 +33,11 @@ public class CategoryDao {
     // open and close DB.
     public void open() throws SQLException {
         database = dbHelper.getWritableDatabase();
+    }
+
+    // open and close DB.
+    public void openReadonly() throws SQLException {
+        database = dbHelper.getReadableDatabase();
     }
 
     public void close() {
@@ -47,43 +55,44 @@ public class CategoryDao {
                 " = '" + category + "' AND " + ExpenseData.USER_ID + " = '" + us.getId() + "'", null, null, null, null);
         int cnt = res.getCount();
         res.close();
-        return cnt > 0;
+        return cnt == 1;
     }
 
     /**
      * Inserts a new category in the database for the specified user.
-     * @param cat The name of the category to insert.
+     * @param name The name of the category to insert.
      * @param us The user to which the category belongs.
      * @return The inserted category.
      */
-    public Category newCategory(String cat, User us) {
+    public Category newCategory(String name, User us) {
         ContentValues cv = new ContentValues();
-        cv.put(ExpenseData.CATEGORY_NAME, cat);
-        cv.put(ExpenseData.USER_ID, us.getId());
-        long insertId = database.insert(ExpenseData.CATEGORIES_TABLE, null, cv);
+        cv.put(ExpenseData.CATEGORY_NAME, name);
+        cv.put(ExpenseData.USER_ID, us.getId().toInt());
+        int rowId = (int)database.insert(ExpenseData.CATEGORIES_TABLE, null, cv);
 
-        // query db and get inserted category
-        Cursor cur = database.query(ExpenseData.CATEGORIES_TABLE, colsToReturn,
-                ExpenseData.CATEGORY_ID + " = " + insertId, null, null, null, null);
+        return new Category(new CatId(rowId), name);
 
-        cur.moveToFirst();
-        Category ans = new Category();
-        ans.setId(cur.getInt(0));
-        ans.setUserId(cur.getInt(1));
-        ans.setCategory(cur.getString(2));
-        cur.close();
+//        // query db and get inserted category
+//        Cursor cur = database.query(ExpenseData.CATEGORIES_TABLE, colsToReturn,
+//                ExpenseData.CATEGORY_ID + " = " + insertId, null, null, null, null);
+//
+//        cur.moveToFirst();
+//        Category ans = new Category();
+//        ans.setId(cur.getInt(0));
+//        ans.setName(cur.getString(2));
+//        cur.close();
 
-        return ans;
+//        return ans;
     }
 
     /**
-     * Updates the name of an existing category that belongs to the specified user.
+     * Updates the name of an existing category. cat_id are unique across all users.
      * @param cat The category object with the new name.
      * @return The updated category.
      */
     public Category editCategory(Category cat) {
         ContentValues cv = new ContentValues();
-        cv.put(ExpenseData.CATEGORY_NAME, cat.getCategory());
+        cv.put(ExpenseData.CATEGORY_NAME, cat.getName());
         database.update(ExpenseData.CATEGORIES_TABLE, cv, ExpenseData.CATEGORY_ID + " = '" +
                 cat.getId() + "'", null);
         return cat;
@@ -102,31 +111,36 @@ public class CategoryDao {
         return cat;
     }
 
+    public List<Category> getCategories(User user) {
+        return getCategories( user.getId() );
+    }
+
     /**
      * Retrieves all categories for the specified user.
-     * @param us The user whose categories to retrieve.
+     * @param userId The user whose categories to retrieve.
      * @return The list of retrieved categories.
      */
-    public List<Category> getCategories(User us) {
-        // must return all categories for a certain user
-        List<Category> ans = new ArrayList<>();
+    public List<Category> getCategories(UserId userId ) {
+        List<Category> list = new ArrayList<>();
 
-        // query db and get all categories for user us
-        Cursor res = database.query(ExpenseData.CATEGORIES_TABLE, colsToReturn,
-                ExpenseData.USER_ID + " = '" + us.getId() + "'", null, null, null, null);
+        String[] args = new String[] {
+            userId.toString()
+        };
+
+        String sql = "select cat_id,category from categories " +
+                "where user_id = ? order by category asc";
+        Cursor res = database.rawQuery(sql, args);
 
         res.moveToFirst();
         while (!res.isAfterLast()) {
-            Category cat = new Category();
-            cat.setId(res.getInt(0));
-            cat.setUserId(res.getInt(1));
-            cat.setCategory(res.getString(2));
-            ans.add(cat);
+            int id = res.getInt(0);
+            String name = res.getString(1);
+            Category cat = new Category( new CatId(id), name);
+            list.add(cat);
             res.moveToNext();
         }
 
         res.close();
-        return ans;
+        return list;
     }
-
 }

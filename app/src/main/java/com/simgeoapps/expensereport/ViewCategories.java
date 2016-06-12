@@ -1,13 +1,12 @@
 package com.simgeoapps.expensereport;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.ListActivity;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.ActionMode;
@@ -21,13 +20,10 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.text.NumberFormat;
-import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -39,21 +35,25 @@ public class ViewCategories extends ListActivity {
     private CategoryDao catSource;
 
     /** Expense data source. Used for calculating total cost. */
-    private ExpenseDao exSource;
+    //private ExpenseDao exSource;
+
+    private static GlobalConfig gc;
 
     /** Currently active user, as specified in global config class. */
-    private User curUser;
+    //private User curUser;
 
     /** Variable to hold currently specified date. */
-    private static Calendar date;
+    //private static Calendar date;
 
     /** Variable to hold the title TextView of the activity. Displays month and year. */
-    private TextView acTitle;
+//    private TextView acTitle;
 
-    private ArrayAdapter<Category> adapter;
+    //private TextView tvTotal;
 
-    public static final String[] MONTHS = { "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"};
+    //private ArrayAdapter<Category> adapter;
+
+//    public static final String[] MONTHS = { "January", "February", "March", "April", "May", "June",
+//            "July", "August", "September", "October", "November", "December"};
 
     /** Action mode for the context menu. */
     private ActionMode aMode;
@@ -76,7 +76,7 @@ public class ViewCategories extends ListActivity {
             iLstn = lv.getOnItemClickListener();
             lv.setOnItemClickListener(null);
             // disable title on click which would open date picker
-            acTitle.setClickable(false);
+//            acTitle.setClickable(false);
             return true;
         }
 
@@ -138,112 +138,129 @@ public class ViewCategories extends ListActivity {
 
             // restore listeners
             getListView().setOnItemClickListener(iLstn);
-            acTitle.setClickable(true);
+//            acTitle.setClickable(true);
         }
     };
 
-    /**
-     * Static class for the date picker dialog.
-     */
-    public static class DateSelector extends DialogFragment
-            implements DatePickerDialog.OnDateSetListener {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the date specified in config as the default date in the picker
-            int year = date.get(Calendar.YEAR);
-            int month = date.get(Calendar.MONTH);
-            int day = date.get(Calendar.DAY_OF_MONTH); // don't need this
+//    /**
+//     * Static class for the date picker dialog.
+//     */
+//    public static class DateSelector extends DialogFragment
+//            implements DatePickerDialog.OnDateSetListener {
+//
+//        @Override
+//        public Dialog onCreateDialog(Bundle savedInstanceState) {
+//            // Use the date specified in config as the default date in the picker
+//            Calendar curDate = gc.getCurDate();
+//            int year = curDate.get(Calendar.YEAR);
+//            int month = curDate.get(Calendar.MONTH);
+//            int day = curDate.get(Calendar.DAY_OF_MONTH); // don't need this
+//
+//            // Create a new instance of DatePickerDialog and return it
+//            return new DatePickerDialog(getActivity(), this, year, month, day);
+//        }
+//
+//        @SuppressWarnings("unchecked")
+//        @Override
+//        public void onDateSet(DatePicker view, int year, int month, int day) {
+//            // specify new date in config
+//            Calendar c = Calendar.getInstance();
+//            c.set(year, month, day); // set new date
+////            GlobalConfig gc = (GlobalConfig) getActivity().getApplication();
+//            gc.setCurDate(c); // change global date
+////            date = c; // change var for this activity
+//
+////            // change title to reflect new date
+////            TextView title = (TextView) getActivity().findViewById(R.id.catMon);
+////            title.setText(MONTHS[date.get(Calendar.MONTH)] + " " + date.get(Calendar.YEAR));
+//
+//            // refresh month/year total for all categories
+////            TextView total = (TextView) getActivity().findViewById(R.id.monYTot);
+////            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
+////                    ((ViewCategories) getActivity()).exSource.getTotalCost(gc.getCurUser(), month, year)));
+////
+////            // refresh categories; must show new totals for the new month/year
+////            ((ArrayAdapter<Category>) ((ViewCategories) getActivity()).getListAdapter()).notifyDataSetChanged();
+//            ((ViewCategories)getActivity()).refreshAll();
+//        }
+//    }
 
-            // Create a new instance of DatePickerDialog and return it
-            return new DatePickerDialog(getActivity(), this, year, month, day);
-        }
+//    public void refreshAll() {
+//        // the gc date has probably changed, but the set of categories is unchanged
+//        updateTitle();
+////        updateGrandTotal();
+//        adapter.notifyDataSetChanged();
+//    }
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public void onDateSet(DatePicker view, int year, int month, int day) {
-            // specify new date in config
-            Calendar c = Calendar.getInstance();
-            c.set(year, month, day); // set new date
-            GlobalConfig gc = (GlobalConfig) getActivity().getApplication();
-            gc.setDate(c); // change global date
-            date = c; // change var for this activity
-
-            // change title to reflect new date
-            TextView title = (TextView) getActivity().findViewById(R.id.catMon);
-            title.setText(MONTHS[date.get(Calendar.MONTH)] + " " + date.get(Calendar.YEAR));
-
-            // refresh month/year total for all categories
-            TextView total = (TextView) getActivity().findViewById(R.id.monYTot);
-            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
-                    ((ViewCategories) getActivity()).exSource.getTotalCost(gc.getCurrentUser(), month, year)));
-
-            // refresh categories; must show new totals for the new month/year
-            ((ArrayAdapter<Category>) ((ViewCategories) getActivity()).getListAdapter()).notifyDataSetChanged();
-        }
-    }
-
-    /**
-     * Class to asynchronously retrieve categories from database.
-     */
-    private class GetCategories extends AsyncTask<Void, Void, List<Category>> {
-        @Override
-        protected List<Category> doInBackground(Void... params) {
-            return catSource.getCategories(curUser);
-        }
-
-        @Override
-        protected void onPostExecute(final List<Category> result) {
-            // use adapter to show the elements in a ListView
-            // change to custom layout if necessary
-            adapter = new ArrayAdapter<Category>(ViewCategories.this,
-                    R.layout.row_layout_category, R.id.catLabel, result) {
-                // override get view in order to allow two items to be displayed: title and total cost
-                @Override
-                public View getView(int position, View convertView, ViewGroup parent) {
-                    View view = super.getView(position, convertView, parent);
-                    TextView text1 = (TextView) view.findViewById(R.id.catLabel);
-                    TextView text2 = (TextView) view.findViewById(R.id.catCost);
-                    text1.setText(result.get(position).toString());
-                    text2.setText(NumberFormat.getCurrencyInstance().format(
-                            exSource.getTotalCost(curUser, result.get(position),
-                                    date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
-                    return view;
-                }
-            };
-            setListAdapter(adapter);
-
-            final ListView lv = getListView();
-            // set item onclick listener to each item in list
-            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    // retrieve selected category
-                    Category cat = adapter.getItem(i);
-
-                    // pass category to ViewExpenses activity and start it
-                    Intent intent = new Intent(ViewCategories.this, ViewExpenses.class);
-                    intent.putExtra(IntentTags.CURRENT_CATEGORY, cat);
-                    startActivity(intent);
-                }
-            });
-
-            // set long click listener, to display CAB
-            lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                // Called when the user long-clicks on an item
-                public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
-                    if (aMode != null) {
-                        return false;
-                    }
-                    lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-                    // mark item at position i as selected
-                    lv.setItemChecked(i, true);
-                    // Start the CAB using the ActionMode.Callback defined above
-                    aMode = ViewCategories.this.startActionMode(mActionModeCallback);
-                    return true;
-                }
-            });
-        }
-    }
+//    /**
+//     * Class to asynchronously retrieve categories from database.
+//     */
+//    private class GetCategories extends AsyncTask<Void, Void, List<Category>> {
+//        @Override
+//        protected List<Category> doInBackground(Void... params) {
+//            return catSource.getCategories(gc.getCurUser());
+//        }
+//
+//        @Override
+//        protected void onPostExecute(final List<Category> result) {
+//            // use adapter to show the elements in a ListView
+//            // change to custom layout if necessary
+//            adapter = new ArrayAdapter<Category>(ViewCategories.this,
+//                    R.layout.row_layout_category, R.id.catLabel, result) {
+//
+//                // override get view in order to allow two items to be displayed: title and total cost
+//                @Override
+//                public View getView(int position, View convertView, ViewGroup parent) {
+//                    View view = super.getView(position, convertView, parent);
+//                    TextView text1 = (TextView) view.findViewById(R.id.catLabel);
+////                    TextView text2 = (TextView) view.findViewById(R.id.catCost);
+//                    text1.setText(result.get(position).toString());
+////                    User curUser = gc.getCurUser();
+////                    Calendar curDate = gc.getCurDate();
+////                    int month = curDate.get(Calendar.MONTH);
+////                    int year = curDate.get(Calendar.YEAR);
+////                    Category curCat = result.get(position);
+//                    // database lookup
+////                    BigDecimal sum = exSource.getTotalCost(curUser, curCat, month, year);
+////                    text2.setText(NumberFormat.getCurrencyInstance().format(sum));
+//                    return view;
+//                }
+//            };
+//
+//            setListAdapter(adapter);
+//
+//            final ListView lv = getListView();
+////            // set item onclick listener to each item in list
+////            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+////                @Override
+////                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+////                    // retrieve selected category
+////                    Category cat = adapter.getItem(i);
+////
+////                    // pass category to ViewExpenses activity and start it
+////                    Intent intent = new Intent(ViewCategories.this, ViewExpenses.class);
+////                    intent.putExtra(IntentTags.CURRENT_CATEGORY, cat);
+////                    startActivity(intent);
+////                }
+////            });
+//
+//            // set long click listener, to display CAB
+//            lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//                // Called when the user long-clicks on an item
+//                public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
+//                    if (aMode != null) {
+//                        return false;
+//                    }
+//                    lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+//                    // mark item at position i as selected
+//                    lv.setItemChecked(i, true);
+//                    // Start the CAB using the ActionMode.Callback defined above
+//                    aMode = ViewCategories.this.startActionMode(mActionModeCallback);
+//                    return true;
+//                }
+//            });
+//        }
+//    }
 
     /**
      * Class to asynchronously add new category to database.
@@ -251,6 +268,7 @@ public class ViewCategories extends ListActivity {
     private class AddCategory extends AsyncTask<String, Void, Category> {
         @Override
         protected Category doInBackground(String... params) {
+            User curUser = gc.getCurUser();
             return catSource.newCategory(params[0], curUser);
         }
 
@@ -297,9 +315,10 @@ public class ViewCategories extends ListActivity {
             aa.remove(result); // remove from adapter
             aa.notifyDataSetChanged(); // update view
             // update total
-            TextView total = (TextView) findViewById(R.id.monYTot);
-            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
-                    exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//            TextView total = (TextView) findViewById(R.id.monYTot);
+//            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
+//                    exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//            updateGrandTotal();
         }
     }
 
@@ -307,43 +326,48 @@ public class ViewCategories extends ListActivity {
      * Retrieve all categories for the current user, populate the list view with them, and set listeners.
      */
     private void populateCategories() {
+
+        // read database
+        User curUser = gc.getCurUser();
         final List<Category> result = catSource.getCategories(curUser);
 
         // use adapter to show the elements in a ListView
         // change to custom layout if necessary
-        adapter = new ArrayAdapter<Category>(ViewCategories.this,
+        ArrayAdapter<Category> adapter = new ArrayAdapter<Category>(ViewCategories.this,
                 R.layout.row_layout_category, R.id.catLabel, result) {
             // override get view in order to allow two items to be displayed: title and total cost
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 TextView text1 = (TextView) view.findViewById(R.id.catLabel);
-                TextView text2 = (TextView) view.findViewById(R.id.catCost);
+//                TextView text2 = (TextView) view.findViewById(R.id.catCost);
                 text1.setText(result.get(position).toString());
-                text2.setText(NumberFormat.getCurrencyInstance().format(
-                        exSource.getTotalCost(curUser, result.get(position),
-                                date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//                User curUser = gc.getCurUser();
+//                Calendar curDate = gc.getCurDate();
+//                text2.setText(NumberFormat.getCurrencyInstance().format(
+//                        exSource.getTotalCost(curUser, result.get(position),
+//                                curDate.get(Calendar.MONTH), curDate.get(Calendar.YEAR))));
                 return view;
             }
         };
         setListAdapter(adapter);
 
         final ListView lv = getListView();
-        // set item onclick listener to each item in list
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                // retrieve selected category
-                Category cat = adapter.getItem(i);
+//        // set onclick listener on listview
+//        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                // retrieve selected category
+//                Category cat = adapter.getItem(i);
+//
+//                // pass category to ViewExpenses activity and start it
+//                Intent intent = new Intent(ViewCategories.this, ViewExpenses.class);
+//                intent.putExtra(IntentTags.CURRENT_CATEGORY, cat);
+//                startActivity(intent);
+//            }
+//        });
 
-                // pass category to ViewExpenses activity and start it
-                Intent intent = new Intent(ViewCategories.this, ViewExpenses.class);
-                intent.putExtra(IntentTags.CURRENT_CATEGORY, cat);
-                startActivity(intent);
-            }
-        });
-
-        // set long click listener, to display CAB
+        // set long click listener on listview, to display CAB
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             // Called when the user long-clicks on an item
             public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
@@ -407,10 +431,13 @@ public class ViewCategories extends ListActivity {
             public void onClick(View v) {
                 // retrieve name entered
                 String catName = enterCat.getText().toString().trim();
+                User curUser = gc.getCurUser();
 
                 // perform checks and add if pass
                 if (catName.equals("")) { // must not be empty
                     enterCat.setError("Please enter a name.");
+                } else if (catName.indexOf('"') >= 0) {
+                    enterCat.setError("Double-quote character not permitted");
                 } else if (catSource.exists(catName, curUser)) { // must not exist for current user
                     enterCat.setError("This category already exists.");
                 } else {
@@ -439,7 +466,7 @@ public class ViewCategories extends ListActivity {
 
         // construct input field
         final EditText enterName = new EditText(this);
-        enterName.setText(catToEdi.getCategory()); // prepopulate with current category name
+        enterName.setText(catToEdi.getName()); // prepopulate with current category name
         enterName.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES); // capitalized phrase
         enterName.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
         builder.setView(enterName);
@@ -476,15 +503,18 @@ public class ViewCategories extends ListActivity {
             public void onClick(View v) {
                 // retrieve name entered
                 String catName = enterName.getText().toString().trim();
+                User curUser = gc.getCurUser();
 
                 // perform checks and add only if pass
                 if (catName.equals("")) { // must not be empty
                     enterName.setError("Please enter a name.");
+                } else if (catName.indexOf('"') >= 0) {
+                    enterName.setError("Double-quote character not permitted");
                 } else if (catSource.exists(catName, curUser)) { // must not exist
                     enterName.setError("This category already exists.");
                 } else {
                     // can be changed
-                    catToEdi.setCategory(catName); // change name in object
+                    catToEdi.setName(catName); // change name in object
                     new EditCategory().execute(catToEdi);
                     dia.dismiss();
                 }
@@ -526,66 +556,100 @@ public class ViewCategories extends ListActivity {
         });
     }
 
+//    private void showDatePicker() {
+//        // note: DateSelector is a class in this file
+//        new DateSelector().show(getFragmentManager(), "configDatePicker");
+//    }
+
+//    private void updateTitle() {
+//        Calendar curDate = gc.getCurDate();
+//        String sTitle = MONTHS[curDate.get(Calendar.MONTH)] + " " + curDate.get(Calendar.YEAR);
+//        acTitle.setText(sTitle);
+//    }
+
+//    private void updateGrandTotal() {
+//        User curUser = gc.getCurUser();
+//        Calendar curDate = gc.getCurDate();
+//        int month = curDate.get(Calendar.MONTH);
+//        int year = curDate.get(Calendar.YEAR);
+//        BigDecimal nTot = exSource.getTotalCost(curUser, month, year);
+//        String sTot = "Total: " + NumberFormat.getCurrencyInstance().format(nTot);
+//        tvTotal.setText(sTot);
+//    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_categories);
 
-        // retrieve selected user's user ID from config
-        GlobalConfig settings = (GlobalConfig) getApplication();
-        curUser = settings.getCurrentUser();
-        date = settings.getDate();
+        // add "<" to action bar
+        ActionBar bar = getActionBar();
+        if (bar != null) {
+            bar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        // non-persistent shared config
+        gc = (GlobalConfig) getApplication();
+//        curUser = settings.getCurUser();
+//        date = gc.getDate();
+
+        // grand total
+//        tvTotal = (TextView) findViewById(R.id.monYTot);
 
         // set month selector listener
-        acTitle = (TextView) findViewById(R.id.catMon);
-        acTitle.setText(MONTHS[date.get(Calendar.MONTH)] + " " + date.get(Calendar.YEAR));
-        acTitle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new DateSelector().show(getFragmentManager(), "configDatePicker");
-            }
-        });
+//        acTitle = (TextView) findViewById(R.id.catMon);
+//        acTitle.setText(MONTHS[date.get(Calendar.MONTH)] + " " + date.get(Calendar.YEAR));
+//        updateTitle();
+//        acTitle.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                showDatePicker();
+//            }
+//        });
 
         // open data sources
         // expense source used only for getting total cost
-        exSource = new ExpenseDao(this);
-        exSource.open();
+//        exSource = new ExpenseDao(this);
+//        exSource.open();
         // for adding and deleting categories
         catSource = new CategoryDao(this);
         catSource.open();
 
-        // calculate and display month/year total for this user for all categories
-        TextView total = (TextView) findViewById(R.id.monYTot);
-        total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
-                exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//        // calculate and display month/year total for this user for all categories
+//        TextView total = (TextView) findViewById(R.id.monYTot);
+//        total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
+//                exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//        updateGrandTotal();
 
         // retrieve categories asynchronously
         // doesn't work when getting adapter in onResume method
         // new GetCategories().execute();
 
-        populateCategories(); // retrieve categories and populate view
+//        populateCategories(); // retrieve categories and populate view
     }
 
     @Override
     protected void onResume() {
-        catSource.open();
-        exSource.open();
-
-        @SuppressWarnings("unchecked")
-        ArrayAdapter<Category> aa = ((ArrayAdapter<Category>) getListAdapter());
-        aa.notifyDataSetChanged();
-
-        // calculate and display month/year total for this user for all categories
-        TextView total = (TextView) findViewById(R.id.monYTot);
-        total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
-                exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
         super.onResume();
+        catSource.open();
+//        exSource.open();
+        populateCategories(); // retrieve categories and populate view
+
+//        @SuppressWarnings("unchecked")
+//        ArrayAdapter<Category> aa = ((ArrayAdapter<Category>) getListAdapter());
+//        aa.notifyDataSetChanged();
+
+//        // calculate and display month/year total for this user for all categories
+//        TextView total = (TextView) findViewById(R.id.monYTot);
+//        total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
+//                exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
+//        updateGrandTotal();
     }
 
     @Override
     protected void onPause() {
         catSource.close();
-        exSource.close();
+//        exSource.close();
         super.onPause();
     }
 
@@ -599,12 +663,18 @@ public class ViewCategories extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_new) {
+        if (id == R.id.action_new_cat) {
             addCategory();
             return true;
-        } else if (id == R.id.switch_user) {
-            Intent intent = new Intent(this, ViewUsers.class);
-            startActivity(intent); // start user activity
+//        } else if (id == R.id.action_pick_date) {
+//            showDatePicker();
+//            return true;
+//        } else if (id == R.id.action_pick_user) {
+//            Intent intent = new Intent(this, ViewUsers.class);
+//            startActivity(intent); // start user activity
+//            return true;
+        } else if (id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
             return true;
         }
         return super.onOptionsItemSelected(item);

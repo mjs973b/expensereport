@@ -1,48 +1,49 @@
 package com.simgeoapps.expensereport;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
+import android.app.ActionBar;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.InputFilter;
-import android.text.InputType;
-import android.text.method.DigitsKeyListener;
+import android.support.v4.app.NavUtils;
 import android.view.ActionMode;
-import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Activity to display list of expenses for user's category.
  */
 public class ViewExpenses extends ListActivity {
+        //implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final int REQUEST_EDIT = 99;
+    private static final int REQUEST_ADD = 101;
+
+    private static GlobalConfig gc;
 
     /** Expenses data source. */
-    private ExpenseDao exSource;
+    private ExpenseDao dbase;
 
     /** Currently active user, as specified in config class. */
-    private User curUser;
+    //private User curUser;
 
     /** Variable to hold currently specified date. */
-    private static Calendar date;
+    //private static Calendar date;
 
     /** Currently selected category, as specified by intent received from ViewCategories class. */
     private Category curCat;
@@ -56,7 +57,7 @@ public class ViewExpenses extends ListActivity {
     /** Call back methods for the context menu. */
     private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
 
-        /** Title which displays category name. */
+        /** TextView which displays category name. */
         private TextView title;
 
         // Called when the action mode is created; startActionMode() was called
@@ -89,7 +90,7 @@ public class ViewExpenses extends ListActivity {
             switch (item.getItemId()) {
                 case R.id.action_edit:
                     // edit selected expense
-                    editExpense();
+                    showEditExpense();
                     mode.finish(); // Action picked, so close the CAB
                     return true;
                 case R.id.action_del:
@@ -128,18 +129,22 @@ public class ViewExpenses extends ListActivity {
     /**
      * Class to asynchronously retrieve expenses from database.
      */
-    private class GetExpenses extends AsyncTask<Void, Void, List<Expense>> {
+    private class GetExpensesByCat extends AsyncTask<Void, Void, List<Expense>> {
         @Override
         protected List<Expense> doInBackground(Void... params) {
             // retrieve all expenses for the user and category and specified month and year
-            return exSource.getExpenses(curUser, curCat, date.get(Calendar.MONTH), date.get(Calendar.YEAR));
+            User curUser = gc.getCurUser();
+            //return dbase.getExpensesByCat(curUser, curCat);
+            return new ArrayList<Expense>();
         }
 
         @Override
         protected void onPostExecute(final List<Expense> result) {
             // use adapter to show elements in list
-            ArrayAdapter<Expense> aa = new ArrayAdapter<>(ViewExpenses.this,
-                    android.R.layout.simple_list_item_activated_1, result);
+//            ArrayAdapter<Expense> aa = new ArrayAdapter<>(ViewExpenses.this,
+//                    android.R.layout.simple_list_item_activated_1, result);
+            MyArrayAdapter aa = new MyArrayAdapter(ViewExpenses.this);
+            aa.addAll(result);
             setListAdapter(aa);
 
             final ListView lv = getListView();
@@ -158,66 +163,104 @@ public class ViewExpenses extends ListActivity {
                 }
             });
         }
+
+        private class MyArrayAdapter extends ArrayAdapter<Expense> {
+            private Context ctx;
+
+            public MyArrayAdapter(Context ctx) {
+                super(ctx, R.layout.row_layout_exp);
+                this.ctx = ctx;
+            }
+            /** number of View class types we can return. used to create a cache for convertView arg.  */
+            @Override
+            public int getViewTypeCount() {
+                // our rows are all the same View object type
+                return 1;
+            }
+            /** create/populate a custom row view to put in the associated ListView */
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                Expense exp = this.getItem(position);
+
+                // previous view may be passed back to us for re-use
+                View v = convertView;
+                if(v == null || (v instanceof LinearLayout) == false) {
+                    LayoutInflater inf = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    v = inf.inflate(R.layout.row_layout_exp, null);
+                }
+
+                TextView tv = (TextView)v.findViewById(R.id.rowDesc);
+                tv.setText( exp.getDescription() );
+                tv = (TextView)v.findViewById(R.id.rowCost);
+                tv.setText( exp.getFormattedCost() );
+
+                return v;
+            }
+        }
     }
 
     /**
-     * Class to asynchronously add new expense to database.
+     * Class to update widgets after asynchronous modification to database. The methods are called
+     * from the gui-event thread.
      */
-    private class AddExpense extends AsyncTask<String, Void, Expense> {
-        @Override
-        protected Expense doInBackground(String... params) {
-            return exSource.newExpense(new BigDecimal(params[0]), params[1],
-                    date.get(Calendar.DATE), date.get(Calendar.MONTH),
-                    date.get(Calendar.YEAR), curUser, curCat);
+    private class DbaseChanged implements ExpenseUtil.Callback {
+        private Expense orig;       // existing object in ArrayAdapter
+
+        public DbaseChanged(Expense orig) {
+            this.orig = orig;
         }
 
         @Override
-        protected void onPostExecute(Expense result) {
+        public void onAdd(Expense newExp) {
+            if (orig == null || newExp == null) {
+                return;
+            }
+            if (orig.getUserId() != newExp.getUserId() ||
+                    orig.getCategoryId() != newExp.getCategoryId()) {
+                // item not in current category, so nothing to do
+                return;
+            }
+
             @SuppressWarnings("unchecked")
             ArrayAdapter<Expense> aa = (ArrayAdapter<Expense>) getListAdapter();
-            aa.add(result);
+            aa.add(newExp);
             aa.notifyDataSetChanged();
 
             // update total
-            categoryTotal = categoryTotal.add(result.getCost());
-            TextView total = (TextView) findViewById(R.id.exTotal);
-            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(categoryTotal));
-    }
-    }
-
-    /**
-     * Class to asynchronously edit an expense in database.
-     */
-    private class EditExpense extends AsyncTask<Expense, Void, Expense> {
-        @Override
-        protected Expense doInBackground(Expense... params) {
-            return exSource.editExpense(params[0]);
+            categoryTotal = categoryTotal.add(newExp.getCost());
+            repaintTotal();
         }
 
         @Override
-        protected void onPostExecute(Expense result) {
+        public void onEdit(Expense newExp) {
+            if (orig == null || newExp == null) {
+                return;
+            }
+            if (orig.getUserId() != newExp.getUserId() ||
+                    orig.getCategoryId() != newExp.getCategoryId()) {
+                // item effectively deleted from current category
+                onDelete(newExp);
+                return;
+            }
+
+            if (orig.getCost().equals(newExp.getCost()) == false) {
+                // update total
+                categoryTotal = categoryTotal.subtract(orig.getCost());
+                categoryTotal = categoryTotal.add(newExp.getCost());
+                repaintTotal();
+            }
+
+            // update object in ArrayAdapter
+            orig.setCost( newExp.getCost());
+            orig.setDescription( newExp.getDescription());
+
             @SuppressWarnings("unchecked")
             ArrayAdapter<Expense> aa = (ArrayAdapter<Expense>) getListAdapter();
             aa.notifyDataSetChanged();
-
-            // update total
-            categoryTotal = categoryTotal.add(result.getCost());
-            TextView total = (TextView) findViewById(R.id.exTotal);
-            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(categoryTotal));
-        }
-    }
-
-    /**
-     * Class to asynchronously delete an expense from database.
-     */
-    private class DeleteExpense extends AsyncTask<Expense, Void, Expense> {
-        @Override
-        protected Expense doInBackground(Expense... params) {
-            return exSource.deleteExpense(params[0]); // delete selected item from db
         }
 
         @Override
-        protected void onPostExecute(Expense result) {
+        public void onDelete(Expense result) {
             @SuppressWarnings("unchecked")
             ArrayAdapter<Expense> aa = (ArrayAdapter<Expense>) getListAdapter();
             aa.remove(result); // remove selected item from adapter
@@ -225,166 +268,81 @@ public class ViewExpenses extends ListActivity {
 
             // update total
             categoryTotal = categoryTotal.subtract(result.getCost());
+            repaintTotal();
+       }
+
+        private void repaintTotal() {
             TextView total = (TextView) findViewById(R.id.exTotal);
             total.setText("Total: " + NumberFormat.getCurrencyInstance().format(categoryTotal));
         }
     }
 
     /**
-     * Method to record a new expense. Called when Add button in action bar is clicked.
+     * Show activity to collection input for new expense.
      */
-    private void addExpense() {
-        // build dialog to ask for expense details
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Record expense");
-        builder.setMessage("Please enter expense details.");
+    private void showAddExpense() {
+        User curUser = gc.getCurUser();
+        //Category curCat = gc.getCurCat();
+        // add item
+        Expense exp = new Expense();
+        exp.setUserId( curUser.getId() );
+        exp.setCategoryId( curCat.getId() );
+        exp.setDate( Expense.today() );
 
-        // construct input fields
-        LinearLayout ll = new LinearLayout(this);
-        ll.setOrientation(LinearLayout.VERTICAL);
-        final EditText enterCost = new EditText(this);
-        final EditText enterDesc = new EditText(this);
-        enterCost.setHint("Cost");
-        enterDesc.setHint("Description (optional)");
-        enterCost.setInputType(InputType.TYPE_CLASS_NUMBER); // to accept dollar amount
-        enterCost.setKeyListener(DigitsKeyListener.getInstance("0123456789.")); // accept digits
-        enterDesc.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES); // description text
-        enterDesc.setFilters(new InputFilter[]{new InputFilter.LengthFilter(40)});
-        ll.addView(enterCost);
-        ll.addView(enterDesc);
-        builder.setView(ll);
+        Bundle bundle = new Bundle();
+        exp.copyToBundle(bundle);
 
-        // add ok and cancel buttons
-        builder.setPositiveButton(R.string.ok, null);
-        builder.setNegativeButton(R.string.cancel, null);
-
-        // create dialog
-        final AlertDialog dia = builder.create(); // don't show yet
-
-        // set listener to description input field to click OK when done
-        enterDesc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    // click dialog's OK when user presses Done on keyboard
-                    dia.getButton(Dialog.BUTTON_POSITIVE).performClick();
-                    handled = true;
-                }
-                return handled;
-            }
-        });
-
-        // set input mode to let keyboard appear when dialog is shown
-        dia.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-
-        dia.show();
-
-        // override onclick for OK button; must be done after show()ing to retrieve OK button
-        dia.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // retrieve name entered
-                String cost = enterCost.getText().toString().trim();
-                String desc = enterDesc.getText().toString().trim();
-
-                // perform checks and add if pass
-                if (cost.equals("")) { // must not be empty
-                    enterCost.setError("Please enter a dollar amount.");
-                } else if (!Pattern.matches("^(\\d{1,10})?(\\.\\d{0,2})?$", cost)) { // must be $$
-                    enterCost.setError("Please enter a valid dollar amount.");
-                } else {
-                    // can be added
-                    new AddExpense().execute(cost, desc);
-                    dia.dismiss();
-                }
-            }
-        });
+        Intent intent = new Intent(this, EditExp.class);
+        intent.setAction(EditExp.ACTION_ADD);
+        intent.putExtras(bundle);
+        startActivityForResult(intent, REQUEST_ADD); // start edit activity
     }
 
     /**
-     * Method to edit selected expense. Called when Edit button is clicked in context menu.
+     * Method to update database with new expense. Called by onActivityResult()
      */
-    private void editExpense() {
+    private void addExpense(Expense newExp) {
+        User curUser = gc.getCurUser();
+        //Category curCat = gc.getCurCat();
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(null), curUser.getId(), curCat.getId());
+        // update database
+        util.addExpense(newExp);
+    }
+
+    /**
+     * Show activity to edit selected expense.
+     */
+    private void showEditExpense() {
         // retrieve adapter and retrieve selected expense
         ListView lv = getListView();
         @SuppressWarnings("unchecked")
         final ArrayAdapter<Expense> aa = (ArrayAdapter<Expense>) getListAdapter();
-        final Expense exToEdi = aa.getItem(lv.getCheckedItemPosition()); // get item at checked pos
+        // get item at checked pos
+        selectedExp = aa.getItem(lv.getCheckedItemPosition());
 
-        // build dialog to ask for expense details
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Edit expense");
-        builder.setMessage("Please enter expense details.");
-
-        // construct input fields
-        LinearLayout ll = new LinearLayout(this);
-        ll.setOrientation(LinearLayout.VERTICAL);
-        final EditText enterCost = new EditText(this);
-        final EditText enterDesc = new EditText(this);
-        enterCost.setText(exToEdi.getCost().toString());
-        enterDesc.setText(exToEdi.getDescription());
-        enterCost.setInputType(InputType.TYPE_CLASS_NUMBER); // to accept dollar amount
-        enterCost.setKeyListener(DigitsKeyListener.getInstance("0123456789.")); // accept digits
-        enterDesc.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES); // description text
-        enterDesc.setFilters(new InputFilter[]{new InputFilter.LengthFilter(40)});
-        ll.addView(enterCost);
-        ll.addView(enterDesc);
-        builder.setView(ll);
-
-        // add ok and cancel buttons
-        builder.setPositiveButton(R.string.ok, null);
-        builder.setNegativeButton(R.string.cancel, null);
-
-        // create dialog
-        final AlertDialog dia = builder.create(); // don't show yet
-
-        // set listener to description input field to click OK when done
-        enterDesc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    // click dialog's OK when user presses Done on keyboard
-                    dia.getButton(Dialog.BUTTON_POSITIVE).performClick();
-                    handled = true;
-                }
-                return handled;
-            }
-        });
-
-        // set input mode to let keyboard appear when dialog is shown
-        dia.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-
-        dia.show();
-
-        // override onclick for OK button; must be done after show()ing to retrieve OK button
-        dia.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // retrieve name entered
-                String cost = enterCost.getText().toString().trim();
-                String desc = enterDesc.getText().toString().trim();
-
-                // perform checks and add if pass
-                if (cost.equals("")) { // must not be empty
-                    enterCost.setError("Please enter a dollar amount.");
-                } else if (!Pattern.matches("^(\\d{1,10})?(\\.\\d{0,2})?$", cost)) { // must be $$
-                    enterCost.setError("Please enter a valid dollar amount.");
-                } else {
-                    // can be changed
-                    categoryTotal = categoryTotal.subtract(exToEdi.getCost());
-                    exToEdi.setCost(new BigDecimal(cost));
-                    exToEdi.setDescription(desc);
-                    new EditExpense().execute(exToEdi);
-                    dia.dismiss();
-                }
-            }
-        });
+        Bundle bundle = new Bundle();
+        selectedExp.copyToBundle(bundle);
+        Intent intent = new Intent(this, EditExp.class);
+        intent.setAction(EditExp.ACTION_EDIT);
+        intent.putExtras(bundle);
+        startActivityForResult(intent, REQUEST_EDIT);
     }
 
     /**
-     * Method to delete selected expense. Called when Delete button is clicked in context menu.
+     * Method to update database after user edits values; assume selectedExp points at object in
+     * arrayadapter
+     */
+    private void editExpense(Expense newExp) {
+        User curUser = gc.getCurUser();
+        //Category curCat = gc.getCurCat();
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(selectedExp), curUser.getId(), curCat.getId());
+        // update database
+        util.editExpense(newExp);
+    }
+
+    /**
+     * Method to delete selected expense from database. Called when Delete button is clicked in
+     * context menu.
      */
     private void deleteExpense() {
         // get list view and list adapter
@@ -393,7 +351,11 @@ public class ViewExpenses extends ListActivity {
         ArrayAdapter<Expense> aa = (ArrayAdapter<Expense>) getListAdapter();
         int pos = lv.getCheckedItemPosition(); // get pos of selected item
         Expense del = aa.getItem(pos); // get item in adapter at position pos
-        new DeleteExpense().execute(del); // delete expense async and update total
+
+        User curUser = gc.getCurUser();
+        //Category curCat = gc.getCurCat();
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(del), curUser.getId(), curCat.getId());
+        util.deleteExpense(del.getRowId());
     }
 
     @Override
@@ -401,46 +363,162 @@ public class ViewExpenses extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_expenses);
 
-        // get intent
-        GlobalConfig settings = (GlobalConfig) getApplication();
-        curUser = settings.getCurrentUser();
-        date = settings.getDate();
-        curCat = (Category) getIntent().getSerializableExtra(IntentTags.CURRENT_CATEGORY);
+        // add "<" to action bar
+        ActionBar bar = getActionBar();
+        if (bar != null) {
+            bar.setDisplayHomeAsUpEnabled(true);
+        }
+
+//        ActionBar actionBar = getActionBar();
+//        if (actionBar != null) {
+//            actionBar.setHomeButtonEnabled(true);
+//        }
+
+        Intent intent = getIntent();
+        curCat = (Category)intent.getSerializableExtra(IntentTags.CURRENT_CATEGORY);
+
+        gc = (GlobalConfig) getApplication();
+
+        User curUser = gc.getCurUser();
+//        Calendar curDate = gc.getCurDate();
+//        Category curCat = gc.getCurCat();
         // set totalCost = ; here
 
         // set title to category
         TextView title = (TextView) findViewById(R.id.exCat);
-        title.setText(curCat.getCategory());
-        title.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent it = new Intent(ViewExpenses.this, ViewCategories.class);
-                startActivity(it);
-            }
-        });
+        title.setText(curCat.getName());
+//        title.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent it = new Intent(ViewExpenses.this, ViewCategories.class);
+//                startActivity(it);
+//            }
+//        });
 
         // open data source
-        exSource = new ExpenseDao(this);
-        exSource.open();
+        dbase = new ExpenseDao(this);
+        dbase.open();
 
-        // display total for user, cat, month/year
-        categoryTotal = exSource.getTotalCost(curUser, curCat, date.get(Calendar.MONTH), date.get(Calendar.YEAR));
+        // display total for user, cat
+        categoryTotal = dbase.getTotalCost(curUser, curCat);
         TextView total = (TextView) findViewById(R.id.exTotal);
         total.setText("Total: " + NumberFormat.getCurrencyInstance().format(categoryTotal));
 
-        new GetExpenses().execute(); // retrieve display expenses for the category
+        GetExpensesByCat job = new GetExpensesByCat();
+        job.execute(); // retrieve display expenses for the category
+        //displayListView();
+    }
+
+//    private void displayListView() {
+//
+//        Cursor cursor = dbase.getCursorExpensesByCat(curUser, curCat,
+//                date.get(Calendar.MONTH), date.get(Calendar.YEAR));
+//
+//        // activity will close the cursor when necessary
+//        //startManagingCursor(cursor);
+//
+//        // the desired columns to be bound
+//        String[] columns = new String[] {
+//                "_id",
+//                ExpenseData.COST_COLUMN,
+//                ExpenseData.DESCRIPTION_COLUMN
+//        };
+//
+//        // the XML defined views which the data will be bound to
+//        int[] to = new int[] {
+//            R.id.rowDate,
+//            R.id.rowCost,
+//            R.id.rowDesc
+//        };
+//
+//        //SimpleCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to)
+//        SimpleCursorAdapter adapt = new SimpleCursorAdapter(this,
+//                R.layout.row_layout_all_exp,
+//                cursor,
+//                columns,
+//                to
+//                );
+//
+//        setListAdapter(adapt);
+//    }
+
+//    private SimpleCursorAdapter mAdapter;
+//
+//    private void displayListView2() {
+//        // Prepare the loader.  Either re-connect with an existing one,
+//        // or start a new one.
+//        getLoaderManager().initLoader(0, null, this);
+//    }
+//
+//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+//        // This is called when a new Loader needs to be created.  This
+//        // sample only has one Loader, so we don't care about the ID.
+//
+//        // the desired columns to be bound
+//        String[] columns = new String[] {
+//                ExpenseData.COST_COLUMN,
+//                ExpenseData.DESCRIPTION_COLUMN
+//        };
+//
+//        // the XML defined views which the data will be bound to
+//        int[] to = new int[] {
+//                R.id.rowCost,
+//                R.id.rowDesc
+//        };
+//
+//        // Now create and return a CursorLoader that will take care of
+//        // creating a Cursor for the data being displayed.
+//        String select = "((" + Contacts.DISPLAY_NAME + " NOTNULL) AND ("
+//                + Contacts.HAS_PHONE_NUMBER + "=1) AND ("
+//                + Contacts.DISPLAY_NAME + " != '' ))";
+//
+//        return new CursorLoader( getActivity(),
+//                baseUri,
+//                columns,
+//                select,
+//                null,
+//                null);
+//    }
+//
+//    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+//        // Swap the new cursor in.  (The framework will take care of closing the
+//        // old cursor once we return.)
+//        mAdapter.swapCursor(data);
+//    }
+//
+//    public void onLoaderReset(Loader<Cursor> loader) {
+//        // This is called when the last Cursor provided to onLoadFinished()
+//        // above is about to be closed.  We need to make sure we are no
+//        // longer using it.
+//        mAdapter.swapCursor(null);
+//    }
+
+    @Override
+    protected void onPause() {
+//        SimpleCursorAdapter adapt = (SimpleCursorAdapter)getListAdapter();
+//        Cursor oldCursor = adapt.swapCursor(null);
+//        //stopManagingCursor(oldCursor);
+//        oldCursor.close();
+//        dbase.close();
+        super.onPause();
     }
 
     @Override
     protected void onResume() {
-        exSource.open();
         super.onResume();
+
+//        dbase.open();
+//        displayListView();
     }
 
     @Override
-    protected void onPause() {
-        exSource.close();
-        super.onPause();
+    protected void onDestroy() {
+//        SimpleCursorAdapter adapt = (SimpleCursorAdapter)getListAdapter();
+//        Cursor oldCursor = adapt.swapCursor(null);
+//        //stopManagingCursor(oldCursor);
+//        oldCursor.close();
+        dbase.close();
+        super.onDestroy();
     }
 
     @Override
@@ -454,13 +532,32 @@ public class ViewExpenses extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_new) {
-            addExpense();
+            showAddExpense();
             return true;
-        } else if (id == R.id.switch_user) {
-            Intent intent = new Intent(this, ViewUsers.class);
-            startActivity(intent); // start user activity
+        } else if (id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // remember item being edited right now
+    private Expense selectedExp;
+
+    /** called with results after user finishes editing record fields. data is null if activity
+     * was cancelled.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (data == null) return;
+        Bundle bundle = data.getExtras();
+        Expense newExp = new Expense(bundle);
+        if (requestCode == REQUEST_ADD && resultCode == RESULT_OK) {
+            // add: update db
+            addExpense(newExp);
+        } else if (requestCode == REQUEST_EDIT && resultCode == RESULT_OK) {
+            // edit: update db
+             editExpense(newExp);
+        }
     }
 }

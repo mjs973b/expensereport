@@ -2,4 +2,6 @@
 <resources>
     <color name="default_color">#FFFFFF</color>
     <color name="selected_color">#F7A22E</color>
+    <color name="bg">#00FFFFFF</color>
+    <color name="fg">#FF000000</color>
 </resources>
