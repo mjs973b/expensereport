@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.simgeoapps.expensereport">
+    package="name.mjs001.expensereport">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
-        android:name=".GlobalConfig"
+        android:name="name.mjs001.expensereport.GlobalConfig"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:logo="@drawable/ic_launcher"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".Splash"
+            android:name="name.mjs001.expensereport.Splash"
             android:configChanges="orientation"
             android:label="@string/title_activity_launch_test"
             android:screenOrientation="portrait">
@@ -20,50 +20,50 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ViewExpenses"
+            android:name="name.mjs001.expensereport.ViewExpenses"
             android:configChanges="orientation"
             android:label="@string/title_activity_view_expenses"
             android:screenOrientation="portrait"
-            android:parentActivityName=".ViewCategories"
+            android:parentActivityName="name.mjs001.expensereport.ViewCategories"
             >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ViewCategories">
+                android:value="name.mjs001.expensereport.ViewCategories">
             </meta-data>
         </activity>
         <activity
-            android:name=".ViewExpensesByTime"
+            android:name="name.mjs001.expensereport.ViewExpensesByTime"
             android:configChanges="orientation"
             android:label="@string/title_view_all_expenses"
             android:screenOrientation="portrait"
             >
         </activity>
         <activity
-            android:name=".ViewCategories"
+            android:name="name.mjs001.expensereport.ViewCategories"
             android:configChanges="orientation"
             android:label="@string/title_activity_view_categories"
             android:screenOrientation="portrait"
-            android:parentActivityName=".ViewExpensesByTime"
+            android:parentActivityName="name.mjs001.expensereport.ViewExpensesByTime"
             >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ViewExpensesByTime">
+                android:value="name.mjs001.expensereport.ViewExpensesByTime">
             </meta-data>
         </activity>
         <activity
-            android:name=".ViewUsers"
+            android:name="name.mjs001.expensereport.ViewUsers"
             android:configChanges="orientation"
             android:label="@string/title_activity_view_users"
             android:screenOrientation="portrait"
-            android:parentActivityName=".ViewExpensesByTime"
+            android:parentActivityName="name.mjs001.expensereport.ViewExpensesByTime"
             >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ViewExpensesByTime">
+                android:value="name.mjs001.expensereport.ViewExpensesByTime">
             </meta-data>
         </activity>
         <activity
-            android:name=".EditExp"
+            android:name="name.mjs001.expensereport.EditExp"
             android:configChanges="orientation"
             android:label="@string/title_activity_edit_exp"
             android:screenOrientation="portrait"

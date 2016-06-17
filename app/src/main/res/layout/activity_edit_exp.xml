@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/LinearLayoutStyle1"
-    tools:context="com.simgeoapps.expensereport.EditExp">
+    tools:context="name.mjs001.expensereport.EditExp">
 
     <TextView
         android:layout_width="match_parent"

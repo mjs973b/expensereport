@@ -1,4 +1,4 @@
-package com.simgeoapps.expensereport;
+package name.mjs001.expensereport;
 
 /**
  * Class to hold all intent tags for the application.
@@ -6,5 +6,5 @@ package com.simgeoapps.expensereport;
 public class IntentTags {
 
     /** Intent extra tag for selected category. */
-    public static final String CURRENT_CATEGORY = "com.simgeoapps.expensereport.CURRENTCATEGORY";
+    public static final String CURRENT_CATEGORY = "com.mjs001.expensereport.CURRENTCATEGORY";
 }

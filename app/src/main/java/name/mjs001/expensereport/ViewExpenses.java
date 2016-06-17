@@ -1,4 +1,4 @@
-package com.simgeoapps.expensereport;
+package name.mjs001.expensereport;
 
 import android.app.ActionBar;
 import android.app.ListActivity;
@@ -23,7 +23,6 @@ import android.widget.TextView;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 /**

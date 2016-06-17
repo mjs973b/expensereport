@@ -1,4 +1,4 @@
-package com.simgeoapps.expensereport;
+package name.mjs001.expensereport;
 
 /**
  * Database category id. immutable

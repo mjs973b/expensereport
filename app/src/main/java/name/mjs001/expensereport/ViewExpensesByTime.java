@@ -1,4 +1,4 @@
-package com.simgeoapps.expensereport;
+package name.mjs001.expensereport;
 
 import android.app.ListActivity;
 import android.content.Intent;

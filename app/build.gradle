@@ -4,7 +4,7 @@ android {
     buildToolsVersion '22.0.1'
 
     defaultConfig {
-        applicationId "com.simgeoapps.expensereport"
+        applicationId "name.mjs001.expensereport"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 3

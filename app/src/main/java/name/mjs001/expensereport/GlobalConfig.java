@@ -1,4 +1,4 @@
-package com.simgeoapps.expensereport;
+package name.mjs001.expensereport;
 
 import android.app.Application;
 import android.content.Context;
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class GlobalConfig extends Application {
     public static final String LOG_TAG = "Expenses";
-    public static final String PREF_NAME = "com.simgeoapps.expensereport.prefs";
+    public static final String PREF_NAME = "com.mjs001.expensereport.prefs";
     public static final String PREF_KEY_USERID = "userId";
     public static final String PREF_KEY_CATID_VIEW = "catId";
     public static final String PREF_KEY_CATID_ADD = "catAddId";
