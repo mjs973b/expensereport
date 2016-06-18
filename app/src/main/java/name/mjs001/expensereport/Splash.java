@@ -15,8 +15,8 @@ public class Splash extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // handler to start the either users or categories activity and close after one second
-        new Handler().postDelayed(new MyRun(), 1500);
+        // handler to start the either users or categories activity
+        new Handler().post(new MyRun());
     }
 
     private class MyRun implements Runnable {
