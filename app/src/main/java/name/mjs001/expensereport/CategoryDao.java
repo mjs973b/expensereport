@@ -99,16 +99,23 @@ public class CategoryDao {
     }
 
     /**
-     * Deletes an existing category that belongs to the specified user.
+     * Deletes an existing category that belongs to the specified user. Do not allow the last
+     * category for a user to be deleted.
+     *
+     * @param user  the user
      * @param cat The category to be deleted.
-     * @return The deleted category.
+     * @return    true on success.
      */
-    public Category deleteCategory(Category cat) {
+    public boolean deleteCategory(User user, Category cat) {
+        List<Category> cats = getCategories(user.getId());
+        if (cats.size() == 1) {
+            return false;
+        }
         // delete expenses for the category
         database.delete(ExpenseData.EXPENSES_TABLE, ExpenseData.CATEGORY_ID + " = '" + cat.getId() + "'", null);
         // delete category
         database.delete(ExpenseData.CATEGORIES_TABLE, ExpenseData.CATEGORY_ID + " = '" + cat.getId() + "'", null);
-        return cat;
+        return true;
     }
 
     public List<Category> getCategories(User user) {

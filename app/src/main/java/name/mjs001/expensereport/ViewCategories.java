@@ -23,6 +23,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -300,25 +301,32 @@ public class ViewCategories extends ListActivity {
     }
 
     /**
-     * Class to asynchronously delete a category from database.
+     * Class to asynchronously delete a category from database, along with all expense items
+     * belonging to that category. Attempting to delete the last category for a user will fail.
      */
     private class DeleteCategory extends AsyncTask<Category, Void, Category> {
+        private boolean status = false;
+
         @Override
         protected Category doInBackground(Category... params) {
-            return catSource.deleteCategory(params[0]);
+            User user = gc.getCurUser();
+            Category cat = params[0];
+            // delete the cat and expenses from database
+            status = catSource.deleteCategory(user, cat);
+            return cat;
         }
 
         @Override
         protected void onPostExecute(Category result) {
-            @SuppressWarnings("unchecked")
-            ArrayAdapter<Category> aa = (ArrayAdapter<Category>) getListAdapter();
-            aa.remove(result); // remove from adapter
-            aa.notifyDataSetChanged(); // update view
-            // update total
-//            TextView total = (TextView) findViewById(R.id.monYTot);
-//            total.setText("Total: " + NumberFormat.getCurrencyInstance().format(
-//                    exSource.getTotalCost(curUser, date.get(Calendar.MONTH), date.get(Calendar.YEAR))));
-//            updateGrandTotal();
+            if (status) {
+                @SuppressWarnings("unchecked")
+                ArrayAdapter<Category> aa = (ArrayAdapter<Category>) getListAdapter();
+                aa.remove(result); // remove from adapter
+                aa.notifyDataSetChanged(); // update view
+            } else {
+                Toast t = Toast.makeText(ViewCategories.this, "Delete failed", Toast.LENGTH_SHORT);
+                t.show();
+            }
         }
     }
 
