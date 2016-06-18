@@ -5,19 +5,6 @@
     android:layout_height="match_parent"
     tools:context=".ViewUsers">
 
-    <TextView
-        android:text="@string/title_activity_view_users"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:textSize="40sp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dip"
-        android:layout_marginBottom="10dp"
-        android:background="#ff000000" />
-
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
