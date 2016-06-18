@@ -7,7 +7,6 @@
     <!-- activity level -->
     <string name="title_activity_splash">Cash Track</string>
     <string name="title_activity_view_expenses">Expenses</string>
-    <string name="title_activity_enter_expenses">Enter Expenses</string>
     <string name="title_activity_view_categories">Manage Categories</string>
     <string name="title_activity_view_users">Manage Users</string>
     <string name="title_activity_edit_exp">Edit Expense</string>
