@@ -100,18 +100,25 @@ public class UserDao {
     }
 
     /**
-     * Deletes an existing user from the database.
+     * Deletes an existing user from the database. Do not allow the last user to be deleted.
+     *
      * @param user The user to be deleted.
-     * @return The deleted user.
+     * @return true on success.
      */
-    public User deleteUser(User user) {
+    public boolean deleteUser(User user) {
+        List<User> users = getAllUsers();
+        if (users.size() == 1) {
+            return false;
+        }
+
         // delete this user's expenses
         database.delete(ExpenseData.EXPENSES_TABLE, ExpenseData.USER_ID + " = '" + user.getId() + "'", null);
         // delete user's categories
         database.delete(ExpenseData.CATEGORIES_TABLE, ExpenseData.USER_ID + " = '" + user.getId() + "'", null);
         // delete user
         database.delete(ExpenseData.USERS_TABLE, ExpenseData.USER_ID + " = '" + user.getId() + "'", null);
-        return user;
+
+        return true;
     }
 
     /**

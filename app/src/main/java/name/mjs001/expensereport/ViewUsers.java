@@ -22,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -225,22 +226,33 @@ public class ViewUsers extends ListActivity {
     }
 
     /**
-     * Class to asynchronously delete a user from database.
+     * Class to asynchronously delete a user from database. Attempting to delete the last user
+     * will fail.
      */
     private class DeleteUser extends AsyncTask<User, Void, User> {
+        private boolean status = false;
+
         @Override
         protected User doInBackground(User... params) {
-            // change table
-            User user = uSource.deleteUser(params[0]);
-            gc.refreshUserCache();
+            User user = params[0];
+            // delete expenses,categories,user in database
+            status = uSource.deleteUser(user);
+            if (status) {
+                gc.refreshUserCache();
+            }
             return user;
         }
 
         @Override
         protected void onPostExecute(User result) {
-            @SuppressWarnings("unchecked")
-            ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-            aa.notifyDataSetChanged(); // update view
+            if (status) {
+                @SuppressWarnings("unchecked")
+                ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
+                aa.notifyDataSetChanged(); // update view
+            } else {
+                Toast t = Toast.makeText(ViewUsers.this, "Delete failed", Toast.LENGTH_SHORT);
+                t.show();
+            }
         }
     }
 
