@@ -1,5 +1,6 @@
 package name.mjs001.expensereport;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -417,6 +418,13 @@ public class ViewUsers extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_users);
+
+        // add "<-" icon to action bar
+        ActionBar bar = getActionBar();
+        if (bar != null) {
+            bar.setHomeAsUpIndicator(R.drawable.ic_back_dark);
+            bar.setDisplayHomeAsUpEnabled(true);
+        }
 
 //        // set selected user in config
 //        GlobalConfig gc = (GlobalConfig) getApplication();

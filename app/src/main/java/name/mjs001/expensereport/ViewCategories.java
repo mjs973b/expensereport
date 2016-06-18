@@ -582,9 +582,10 @@ public class ViewCategories extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_categories);
 
-        // add "<" to action bar
+        // add "<-" icon to action bar
         ActionBar bar = getActionBar();
         if (bar != null) {
+            bar.setHomeAsUpIndicator(R.drawable.ic_back_dark);
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
