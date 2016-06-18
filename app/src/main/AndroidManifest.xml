@@ -12,7 +12,7 @@
         <activity
             android:name="name.mjs001.expensereport.Splash"
             android:configChanges="orientation"
-            android:label="@string/title_activity_launch_test"
+            android:label="@string/title_activity_splash"
             android:screenOrientation="portrait">
             <intent-filter> <!-- put launcher title here, else inherit from parent activity -->
                 <action android:name="android.intent.action.MAIN" />
