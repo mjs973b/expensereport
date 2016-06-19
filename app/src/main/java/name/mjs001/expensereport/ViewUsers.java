@@ -173,6 +173,9 @@ public class ViewUsers extends ListActivity {
         protected User doInBackground(String... params) {
             // add row to table
             User newU = uSource.newUser(params[0]);
+            if (newU == null) {
+                return null;
+            }
             gc.refreshUserCache();
 
             // create a default category
@@ -187,19 +190,24 @@ public class ViewUsers extends ListActivity {
 
         @Override
         protected void onPostExecute(User result) {
-            // get adapter
-            @SuppressWarnings("unchecked")
-            ArrayAdapter<User> adapter = (ArrayAdapter<User>) getListAdapter();
-            adapter.notifyDataSetChanged();
+            if (result != null) {
+                // get adapter
+                @SuppressWarnings("unchecked")
+                ArrayAdapter<User> adapter = (ArrayAdapter<User>) getListAdapter();
+                adapter.notifyDataSetChanged();
 
-            // find the added user by matching user_id
-            List<User> users = gc.getUserList();
-            for(int i = 0; i < users.size(); i++) {
-                if (result.getId().equals(users.get(i).getId())) {
-                    // click on it
-                    getListView().performItemClick(null, i, adapter.getItemId(i));
-                    break;
+                // on first user create, click the item
+                List<User> users = gc.getUserList();
+                for (int i = 0; i < users.size(); i++) {
+                    if (result.getId().equals(users.get(i).getId())) {
+                        // click on it
+                        getListView().performItemClick(null, i, adapter.getItemId(i));
+                        break;
+                    }
                 }
+            } else {
+                Toast t = Toast.makeText(ViewUsers.this, "Create failed", Toast.LENGTH_SHORT);
+                t.show();
             }
         }
     }
