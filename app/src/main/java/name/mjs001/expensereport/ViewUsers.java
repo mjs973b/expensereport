@@ -198,12 +198,8 @@ public class ViewUsers extends ListActivity {
 
                 // on first user create, click the item
                 List<User> users = gc.getUserList();
-                for (int i = 0; i < users.size(); i++) {
-                    if (result.getId().equals(users.get(i).getId())) {
-                        // click on it
-                        getListView().performItemClick(null, i, adapter.getItemId(i));
-                        break;
-                    }
+                if (users.size() == 1) {
+                    getListView().performItemClick(null, 0, adapter.getItemId(0));
                 }
             } else {
                 Toast t = Toast.makeText(ViewUsers.this, "Create failed", Toast.LENGTH_SHORT);
