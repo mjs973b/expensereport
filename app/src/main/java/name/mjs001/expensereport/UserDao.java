@@ -60,10 +60,15 @@ public class UserDao {
 
     /**
      * Inserts a new user into the database.
-     * @param name The name of the user to insert.
-     * @return The inserted user.
+     * @param name The name of the user to insert. Can not have leading or trailing whitespace.
+     * @return The inserted user, or null on error.
      */
     public User newUser(String name) {
+        String name2 = name.trim();
+        if (name2.length() == 0 || !name.equals(name2)) {
+            return null;
+        }
+
         ContentValues cv = new ContentValues();
         cv.put(ExpenseData.USER_NAME, name);
 
