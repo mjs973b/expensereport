@@ -64,7 +64,7 @@
         <activity
             android:name="name.mjs001.expensereport.EditExp"
             android:configChanges="orientation"
-            android:label="@string/title_activity_edit_exp"
+            android:label="@string/title_activity_editexp_edit"
             android:screenOrientation="portrait"
             />
     </application>

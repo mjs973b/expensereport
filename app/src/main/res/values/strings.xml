@@ -12,6 +12,8 @@
     <string name="title_activity_edit_exp">Edit Expense</string>
     <string name="title_view_all_expenses">Expenses - All</string>
     <string name="title_view_recent_expenses">Expenses - Recent</string>
+    <string name="title_activity_editexp_edit">Edit Expense</string>
+    <string name="title_activity_editexp_add">Add Expense</string>
 
     <!-- view level -->
     <string name="label_user">User name:</string>

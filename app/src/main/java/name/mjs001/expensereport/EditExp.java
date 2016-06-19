@@ -110,7 +110,7 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
 
         String action = intent.getAction();
         if (action.equals(ACTION_ADD)) {
-            setTitle("Add Expense");
+            setTitle(R.string.title_activity_editexp_add);     // "Add Expense"
         } else {
             // title default "Edit Expense" configured in manifest
             // get cost as #.##
