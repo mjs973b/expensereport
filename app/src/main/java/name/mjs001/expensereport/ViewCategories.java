@@ -275,10 +275,15 @@ public class ViewCategories extends ListActivity {
 
         @Override
         protected void onPostExecute(Category result) {
-            @SuppressWarnings("unchecked")
-            ArrayAdapter<Category> adapter = (ArrayAdapter<Category>) getListAdapter();
-            adapter.add(result);
-            adapter.notifyDataSetChanged();
+            if (result != null) {
+                @SuppressWarnings("unchecked")
+                ArrayAdapter<Category> adapter = (ArrayAdapter<Category>) getListAdapter();
+                adapter.add(result);
+                adapter.notifyDataSetChanged();
+            } else {
+                Toast t = Toast.makeText(ViewCategories.this, "Create failed", Toast.LENGTH_SHORT);
+                t.show();
+            }
         }
     }
 
