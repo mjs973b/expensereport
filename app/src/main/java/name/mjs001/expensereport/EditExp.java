@@ -76,7 +76,6 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
         tvCost = (AutoCompleteTextView) findViewById(R.id.editCost);
 
         tvDesc = (AutoCompleteTextView) findViewById(R.id.editDesc);
-        //tvDesc.setOnEditorActionListener(new MyKeyListener());
         populateAutoCompleteAdapter(curExp.getCategoryId());
 
         tvCat = (Spinner) findViewById(R.id.editCat);
@@ -201,8 +200,8 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                         android.R.layout.simple_dropdown_item_1line,
                         list);
-
                 tvDesc.setAdapter(adapter);
+                tvDesc.setOnItemClickListener(new DescListener());
             } catch(Exception e1) {
                 Toast.makeText(this, "Db DESC read failed", Toast.LENGTH_SHORT).show();
             } finally {
@@ -287,6 +286,51 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
             Category cat = catList.get(pos);
             populateAutoCompleteAdapter(cat.getId());
         }
+    }
+
+    /** if description auto-complete item is selected, we want to populate tvCost */
+    private class DescListener implements AdapterView.OnItemClickListener {
+        public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
+            // this user may not be same as current ViewExpenses user
+            User user = (User)tvUser.getSelectedItem();
+            ArrayAdapter<String> adapter = (ArrayAdapter)parent.getAdapter();
+            String sDesc = adapter.getItem(pos);
+            populateCost(user.getId(), sDesc);
+        }
+    }
+
+    /** populate the tvCost field, but only if it is empty. */
+    private void populateCost(UserId userId, String sDesc) {
+        if (sDesc.length() == 0 || tvCost.getText().length() > 0) {
+            // don't overwrite if user has something there already
+            return;
+        }
+
+        ExpenseDao dbase;
+        int cents = 0;
+        try {
+            // fetch a list of strings from database
+            dbase = new ExpenseDao(this);
+            dbase.openReadonly();
+            try {
+                 cents = dbase.getLastCreatedCostByDesc(userId, sDesc);
+            } catch(Exception e1) {
+                Toast.makeText(this, "expense db read failed", Toast.LENGTH_SHORT).show();
+            } finally {
+                dbase.close();
+            }
+        } catch(Exception e2) {
+            Toast.makeText(this, "expense db open failed", Toast.LENGTH_SHORT).show();
+        }
+        // format as dollars #.## without dollar symbol
+        String sCost;
+        if ((cents % 100) == 0) {
+            sCost = Integer.toString(cents / 100);
+        } else {
+            sCost = new BigDecimal(cents).movePointLeft(2).toString();
+        }
+        // we know widget is empty
+        tvCost.append(sCost);       // leave cursor at end
     }
 
     /** called when OK button is clicked */

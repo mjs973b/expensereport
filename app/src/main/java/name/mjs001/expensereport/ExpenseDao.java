@@ -326,6 +326,35 @@ public class ExpenseDao {
 //        return database.rawQuery(sql, args);
 //    }
 
+    /**
+     * Find the most-recently entered expense matching user and desc (Note: not latest date)
+     * and return the cost field. Return 0 if no match.
+     *
+     * @param userId
+     * @param desc
+     * @return   cost in cents
+     */
+    public int getLastCreatedCostByDesc(UserId userId, String desc) {
+        String[] args = {
+                userId.toString(),
+                desc
+        };
+
+        String sql = "select cost " +
+                "from expenses where user_id = ? and description = ? " +
+                "order by expense_id desc " +
+                "limit 1 ";
+        Cursor res = database.rawQuery(sql, args);
+
+        res.moveToFirst();
+        int nCost = 0;
+        if(!res.isAfterLast()) {
+            nCost = res.getInt(0);
+        }
+        res.close();
+        return nCost;
+    }
+
     public List<String> getSortedCostValues(Expense exp) {
         ArrayList<String> list = new ArrayList<String>();
         String[] args = {
