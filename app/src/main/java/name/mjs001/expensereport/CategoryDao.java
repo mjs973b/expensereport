@@ -60,29 +60,29 @@ public class CategoryDao {
 
     /**
      * Inserts a new category in the database for the specified user.
-     * @param name The name of the category to insert.
+     * @param name The name of the category to insert. Can not have leading or trailing whitespace.
      * @param us The user to which the category belongs.
-     * @return The inserted category.
+     * @return The inserted category or null on error.
      */
     public Category newCategory(String name, User us) {
+        String name2 = name.trim();
+        if (name2.length() == 0 || !name.equals(name2)) {
+            return null;
+        }
+
         ContentValues cv = new ContentValues();
         cv.put(ExpenseData.CATEGORY_NAME, name);
         cv.put(ExpenseData.USER_ID, us.getId().toInt());
-        int rowId = (int)database.insert(ExpenseData.CATEGORIES_TABLE, null, cv);
-
+        int rowId = -1;
+        try {
+            rowId = (int) database.insert(ExpenseData.CATEGORIES_TABLE, null, cv);
+        } catch(Exception e) {
+            rowId = -1;
+        }
+        if (rowId < 1) {
+            return null;
+        }
         return new Category(new CatId(rowId), name);
-
-//        // query db and get inserted category
-//        Cursor cur = database.query(ExpenseData.CATEGORIES_TABLE, colsToReturn,
-//                ExpenseData.CATEGORY_ID + " = " + insertId, null, null, null, null);
-//
-//        cur.moveToFirst();
-//        Category ans = new Category();
-//        ans.setId(cur.getInt(0));
-//        ans.setName(cur.getString(2));
-//        cur.close();
-
-//        return ans;
     }
 
     /**
