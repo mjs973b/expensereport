@@ -269,11 +269,19 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
             // Another interface callback
         }
         public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+            Category prevCat = (Category)tvCat.getSelectedItem();
             User user = userList.get(pos);
             populateCatsList(user.getId());
             ArrayAdapter adapter = (ArrayAdapter)tvCat.getAdapter();
             adapter.notifyDataSetChanged();
-            // leave selection at position 0
+            // try to select cat with same name else leave selection at position 0
+            String prevCatName = prevCat.getName();
+            for(int i = 0; i < catList.size(); i++) {
+                if (prevCatName.equals(catList.get(i).getName())) {
+                    tvCat.setSelection(i);
+                    break;
+                }
+            }
         }
     }
 
