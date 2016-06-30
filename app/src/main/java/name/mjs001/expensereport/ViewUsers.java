@@ -1,15 +1,15 @@
 package name.mjs001.expensereport;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ListActivity;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.InputType;
-import android.view.ActionMode;
+import android.util.DisplayMetrics;
+import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,19 +17,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
 
 /**
- * Activity to display the list of users.
+ * Activity to manage the list of users and select the current User.
  */
-public class ViewUsers extends ListActivity {
+public class ViewUsers extends Activity {
 
     // non-persisent shared config
     private GlobalConfig gc;
@@ -37,132 +36,69 @@ public class ViewUsers extends ListActivity {
     /** User data source. */
     private UserDao uSource;
 
-    /** Action mode for the context menu. */
-    private ActionMode aMode;
-
-    /** Call back methods for the context menu. */
-    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
-
-        /** To temporarily store listener when removed. */
-        private AdapterView.OnItemClickListener lstn;
-
-        // Called when the action mode is created; startActionMode() was called
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            // Inflate a menu resource providing context menu items
-            MenuInflater inflater = mode.getMenuInflater();
-            inflater.inflate(R.menu.context_users, menu);
-
-            // disable listeners here
-            ListView lv = getListView();
-            lstn = lv.getOnItemClickListener();
-            lv.setOnItemClickListener(null);
-            return true;
-        }
-
-        // Called each time the action mode is shown. Always called after onCreateActionMode, but
-        // may be called multiple times if the mode is invalidated.
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            // disable other listeners temporarily to prevent multiple actions
-            // disable on item click which would start expenses activity
-//            ListView lv = getListView();
-//            lstn = lv.getOnItemClickListener();
-//            lv.setOnItemClickListener(null);
-            return false; // Return false if nothing is done
-        }
-
-        // Called when the user selects a contextual menu item
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.action_edit:
-                    // edit a user's name
-                    editUser();
-                    mode.finish(); // close the CAB
-                    return true;
-                case R.id.action_del:
-                    // delete selected user
-                    deleteUser();
-                    mode.finish(); // Action picked, so close the CAB
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        // Called when the user exits the action mode
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-            // unselect item that was selected (if it wasn't deleted)
-            final ListView lv = getListView();
-            lv.clearChoices();
-            lv.setItemChecked(lv.getCheckedItemPosition(), false);
-            // ((ArrayAdapter<Expense>) getListAdapter()).notifyDataSetChanged();
-            // prevent item selection when context menu is inactive
-            // doesn't work if called in same thread and item remains highlighted;
-            // calling from new thread as a workaround
-            lv.post(new Runnable() {
-                @Override
-                public void run() {
-                    lv.setChoiceMode(ListView.CHOICE_MODE_NONE);
-                }
-            });
-            aMode = null;
-
-            // restore listeners
-            getListView().setOnItemClickListener(lstn);
-        }
-    };
+    // index in UserList
+    private int longClickIdx = -1;
 
     /**
-     * Class to asynchronously retrieve users from database.
+     * Draw the radio buttons, one per user, with the current user selected.
      */
-    private void populateListView() {
+    private void populateView() {
+        int pad_px = dpToPx(10);
         List<User> list = gc.getUserList();
-        final ArrayAdapter<User> adapter = new ArrayAdapter<>(ViewUsers.this,
-                android.R.layout.simple_list_item_activated_1, list);
+        UserId curId = gc.getCurUser().getId();
 
-        setListAdapter(adapter);
+        RadioGroup group = (RadioGroup)findViewById(R.id.radioGroup);
+        // clean up existing radio buttons
+        for(int i = 0; i < group.getChildCount(); i++) {
+            RadioButton b = (RadioButton)group.getChildAt(i);
+            b.setOnClickListener(null);
+            b.setOnLongClickListener(null);
+            b.setLongClickable(false);
+        }
+        group.removeAllViews();
 
-        final ListView lv = getListView();
-        // set item onclick listener to each item in list, to launch categories activity
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                // retrieve selected user
-                User us = adapter.getItem(i);
+        // create new radio buttons
+        for(int i = 0; i < list.size(); i++) {
+            User u = list.get(i);
+            RadioButton button = new RadioButton(this);
+            button.setPadding(pad_px, pad_px, pad_px, pad_px);
+            button.setTextSize(25);   // scaled pixels
+            //button.setTextAppearance(this, android.R.style.TextAppearance_Holo_Medium);
+            button.setId(i);
+            button.setText( u.getName() );
 
-                // remember selected user in config
-                gc.setCurUser(us);
+            button.setChecked(curId.equals(u.getId()));
 
-                // start ViewExpensesByTime activity
-                Intent intent = new Intent(ViewUsers.this, ViewExpensesByTime.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-            }
-        });
-
-        // set long click listener, to display CAB
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            // Called when the user long-clicks on an item
-            public boolean onItemLongClick(AdapterView<?> aView, View view, int i, long l) {
-                if (aMode != null) {
-                    return false;
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int idx = v.getId();
+                    User u2 = gc.getUserList().get(idx);
+                    gc.setCurUser(u2);
                 }
-                lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-                // mark item at position i as selected
-                lv.setItemChecked(i, true);
-                // Start the CAB using the ActionMode.Callback defined above
-                aMode = ViewUsers.this.startActionMode(mActionModeCallback);
-                return true;
-            }
-        });
+            });
+            button.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    longClickIdx = v.getId();
+                    return false;    /* do NOT consume long click so it bubbles up to RadioGroup View */
+                }
+            });
+            button.setLongClickable(true);
+
+            group.addView(button);
+        }
 
         // prompt user for name if no users exist
         if (list.size() == 0) {
             addUser();
         }
+    }
+
+    private int dpToPx(int dp) {
+        DisplayMetrics displayMetrics = this.getResources().getDisplayMetrics();
+        int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+        return px;
     }
 
     /**
@@ -191,16 +127,7 @@ public class ViewUsers extends ListActivity {
         @Override
         protected void onPostExecute(User result) {
             if (result != null) {
-                // get adapter
-                @SuppressWarnings("unchecked")
-                ArrayAdapter<User> adapter = (ArrayAdapter<User>) getListAdapter();
-                adapter.notifyDataSetChanged();
-
-                // on first user create, click the item
-                List<User> users = gc.getUserList();
-                if (users.size() == 1) {
-                    getListView().performItemClick(null, 0, adapter.getItemId(0));
-                }
+                populateView();
             } else {
                 Toast t = Toast.makeText(ViewUsers.this, "Create failed", Toast.LENGTH_SHORT);
                 t.show();
@@ -222,10 +149,7 @@ public class ViewUsers extends ListActivity {
 
         @Override
         protected void onPostExecute(User result) {
-            // refresh view
-            @SuppressWarnings("unchecked")
-            ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-            aa.notifyDataSetChanged();
+            populateView();
         }
     }
 
@@ -250,9 +174,7 @@ public class ViewUsers extends ListActivity {
         @Override
         protected void onPostExecute(User result) {
             if (status) {
-                @SuppressWarnings("unchecked")
-                ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-                aa.notifyDataSetChanged(); // update view
+                populateView();
             } else {
                 Toast t = Toast.makeText(ViewUsers.this, "Delete failed", Toast.LENGTH_SHORT);
                 t.show();
@@ -327,13 +249,7 @@ public class ViewUsers extends ListActivity {
     /**
      * Method to edit a user's name, called when the Edit button in the context menu is clicked.
      */
-    private void editUser() {
-        // retrieve adapter and retrieve selected user
-        ListView lv = getListView();
-        @SuppressWarnings("unchecked")
-        final ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-        final User userToEdi = aa.getItem(lv.getCheckedItemPosition()); // get item at checked pos
-
+    private void editUser(final User userToEdi) {
         // show dialog to enter new name
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Edit user");
@@ -399,7 +315,7 @@ public class ViewUsers extends ListActivity {
     /**
      * Method to delete a user, called when the Delete button in the context menu is clicked.
      */
-    private void deleteUser() {
+    private void deleteUser(final User userToDel) {
         // show dialog confirming deletion
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete user");
@@ -414,17 +330,12 @@ public class ViewUsers extends ListActivity {
 
         dia.show(); // show dialog
 
-        // get list view and list adapter
-        ListView lv = getListView();
-        @SuppressWarnings("unchecked")
-        final ArrayAdapter<User> aa = (ArrayAdapter<User>) getListAdapter();
-        final User userToDel = aa.getItem(lv.getCheckedItemPosition()); // get item at checked pos
-
         // override onclick for OK button; must be done after show()ing to retrieve OK button
         dia.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new DeleteUser().execute(userToDel); // delete user from db
+                // delete user from db. Will fail if last user.
+                new DeleteUser().execute(userToDel);
                 dia.dismiss(); // close dialog
             }
         });
@@ -442,33 +353,21 @@ public class ViewUsers extends ListActivity {
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
-//        // set selected user in config
-//        GlobalConfig gc = (GlobalConfig) getApplication();
-//        if (gc.getCurUser() != null) {
-//            new Handler().post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    // start ViewCategories activity
-//                    Intent intent = new Intent(ViewUsers.this, ViewExpensesByTime.class);
-//                    startActivity(intent);
-//                }
-//            });
-//        }
+        // long-press will invoke context menu
+        RadioGroup grpView = (RadioGroup)findViewById(R.id.radioGroup);
+        registerForContextMenu(grpView);
 
         gc = (GlobalConfig)getApplication();
 
         // open data source
         uSource = new UserDao(this);
-//        uSource.open();
-//        // retrieve users asynchronously
-//        new GetUsers().execute();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         uSource.open();
-        populateListView();
+        populateView();
     }
 
     @Override
@@ -495,4 +394,34 @@ public class ViewUsers extends ListActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /** called when the user long-presses a row. v is the RadioGroup View. menuInfo is null. */
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        menu.setHeaderTitle(R.string.menu_exp_title);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.context_expenses, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        // position in UserList
+        int userIdx = longClickIdx;
+        longClickIdx = -1;
+        List<User> users = gc.getUserList();
+        if (userIdx >= 0 && userIdx < users.size()) {
+            User sel = users.get(userIdx);
+            // examine menu item id
+            int id = item.getItemId();
+            if (id == R.id.action_edit) {
+                editUser(sel);
+                return true;
+            } else if (id == R.id.action_del) {
+                deleteUser(sel);
+                return true;
+            }
+        }
+        // not handled by us
+        return super.onContextItemSelected(item);
+    }
 }
