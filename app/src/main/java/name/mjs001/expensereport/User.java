@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * User model. id is immutable.
  */
-public class User implements Serializable{
+public class User implements Serializable, Comparable<User> {
     // data fields; these match the columns in DB
     private UserId id;
     private String name;
@@ -35,5 +35,22 @@ public class User implements Serializable{
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public int hashCode() {
+        return id.toInt();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof User) {
+            return id.toInt() == ((User)other).id.toInt();
+        }
+        return false;
+    }
+    @Override
+    public int compareTo(User other) {
+        return id.toInt() - other.id.toInt();
     }
 }
