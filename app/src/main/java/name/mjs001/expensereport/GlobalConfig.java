@@ -3,6 +3,7 @@ package name.mjs001.expensereport;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,26 +52,32 @@ public class GlobalConfig extends Application {
         // re-use original userList object for adapters
         userList.clear();
         userList.addAll(tmpList);
+
+        // if set, confirm the curUser exists in userList (may have just been deleted)
+        if (curUser != null) {
+            for (int i = 0; i < userList.size(); i++) {
+                if (curUser.equals(userList.get(i))) {
+                    return;
+                }
+            }
+            // fix by choosing first user
+            setCurUser(userList.get(0));
+        }
     }
 
     public List<User> getUserList() {
         return userList;
     }
 
-//    public Calendar getCurDate() {
-//        return curDate;
-//    }
-
     public void setCurUser(User user) {
-        if (curUser == null || user.getId().toInt() != curUser.getId().toInt()) {
+        if (user == null) {
+            // curUser does not change
+        } else if (curUser == null || !curUser.equals(user)) {
             curUser = user;
             savePrefUser();
         }
+        Log.i(LOG_TAG, "Current user is " + curUser.getName());
     }
-
-//    public void setCurDate(Calendar date) {
-//        curDate = date;
-//    }
 
     public void setViewCatId(CatId cat) {
         if (curViewCatId.toInt() != cat.toInt()) {
@@ -120,23 +127,9 @@ public class GlobalConfig extends Application {
     public void onCreate() {
         super.onCreate();
 
-//        // here pass current month and year, and default/only user, and
-//        setCurDate(Calendar.getInstance()); // use current date by default
-
-//        UserDao uSource = new UserDao(this);
-//        uSource.open();
-//        userList = uSource.getAllUsers();
-//        uSource.close();
         refreshUserCache();
-
+        // assumes that UserCache is already loaded
         loadFromPersistentStorage();
-
-        // unnecessary as user only has to select once ever now
-//        if (userList.size() == 1) {
-//            User soleUser = userList.get(0);
-//            setCurUser(soleUser); // set default user if only one
-//        }
-
      }
 
     /** initialize this object from persistent storage */
