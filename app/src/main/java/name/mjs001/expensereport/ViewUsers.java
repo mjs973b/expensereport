@@ -107,8 +107,10 @@ public class ViewUsers extends Activity {
     private class AddUser extends AsyncTask<String, Void, User> {
         @Override
         protected User doInBackground(String... params) {
+            uSource.open();
             // add row to table
             User newU = uSource.newUser(params[0]);
+            uSource.close();
             if (newU == null) {
                 return null;
             }
@@ -142,7 +144,9 @@ public class ViewUsers extends Activity {
         @Override
         protected User doInBackground(User... params) {
             // change table
+            uSource.open();
             User user = uSource.editUser(params[0]);
+            uSource.close();
             gc.refreshUserCache();
             return user;
         }
@@ -164,7 +168,9 @@ public class ViewUsers extends Activity {
         protected User doInBackground(User... params) {
             User user = params[0];
             // delete expenses,categories,user in database
+            uSource.open();
             status = uSource.deleteUser(user);
+            uSource.close();
             if (status) {
                 gc.refreshUserCache();
             }
@@ -235,7 +241,7 @@ public class ViewUsers extends Activity {
                     enterName.setError("Please enter a name.");
                 } else if (username.indexOf('"') >= 0) {
                     enterName.setError("Double-quote character not permitted");
-                } else if (uSource.exists(username)) { // must not exist
+                } else if (userNameExists(username)) { // must not exist
                     enterName.setError("This user already exists.");
                 } else {
                     // can be added
@@ -300,7 +306,7 @@ public class ViewUsers extends Activity {
                     enterName.setError("Please enter a name.");
                 } else if (username.indexOf('"') >= 0) {
                     enterName.setError("Double-quote character not permitted");
-                } else if (uSource.exists(username)) { // must not exist
+                } else if (userNameExists(username)) { // must not exist
                     enterName.setError("This user already exists.");
                 } else {
                     // can be changed
@@ -310,6 +316,17 @@ public class ViewUsers extends Activity {
                 }
             }
         });
+    }
+
+    /** @return true if name already exists */
+    private boolean userNameExists(String name) {
+        List<User> users = gc.getUserList();
+        for(int i = 0; i < users.size(); i++) {
+            if (name.equals(users.get(i).getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -359,20 +376,18 @@ public class ViewUsers extends Activity {
 
         gc = (GlobalConfig)getApplication();
 
-        // open data source
+        // object used to access data source
         uSource = new UserDao(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        uSource.open();
         populateView();
     }
 
     @Override
     protected void onPause() {
-        uSource.close();
         super.onPause();
     }
 
