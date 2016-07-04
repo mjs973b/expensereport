@@ -31,6 +31,7 @@
     <string name="menu_export_data">Export Data</string>
     <string name="menu_exp_title">Action</string>
     <string name="menu_show_recent">Show Recent</string>
+    <string name="menu_undo">Undo</string>
 
     <!-- fragment level -->
     <string name="ok">OK</string>

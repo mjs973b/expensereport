@@ -38,7 +38,15 @@ public class ViewExpensesByTime extends ListActivity {
      * This does not survive activity destruction.
      */
     private String lastAddDate;     // yyyy-mm-dd
+
+    /**
+     * time-of-day when last add was made. Used to calculate how long ago the last add operation
+     * was performed.
+     */
     private Date lastAddModifyTime;
+
+    /** last deleted expense for undo, null if none */
+    private Expense lastDeletedExpense;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -210,6 +218,17 @@ public class ViewExpensesByTime extends ListActivity {
         return true;
     }
 
+    /** called just before menu is shown */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // initialize undo cmd state
+        MenuItem item = menu.findItem(R.id.action_undo);
+        if (item != null) {
+            item.setEnabled( lastDeletedExpense != null );
+        }
+        return true;        // show menu
+    }
+
     /** the menu in the upper right */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -238,6 +257,13 @@ public class ViewExpensesByTime extends ListActivity {
             DataExport export = new DataExport(this);
             new Thread(export).start();
             //export.writeFile();
+            return true;
+        } else if (id == R.id.action_undo) {
+            if (lastDeletedExpense != null) {
+                // entry is assigned a new rowId number
+                addExpenseToDb(lastDeletedExpense);
+                lastDeletedExpense = null;
+            }
             return true;
         } else if (id == android.R.id.home) {
             NavUtils.navigateUpFromSameTask(this);
@@ -429,6 +455,7 @@ public class ViewExpensesByTime extends ListActivity {
             reloadCursor();
         }
         public void onDelete(Expense exp) {
+            lastDeletedExpense = exp;
             reloadCursor();
         }
     }
