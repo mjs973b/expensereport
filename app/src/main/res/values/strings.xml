@@ -22,7 +22,7 @@
     <string name="label_cost">Cost:</string>
     <string name="label_description">Description:</string>
     <string name="label_show">Show:</string>
-    <string name="label_loading">Loading...</string>
+    <string name="label_loading">Loading…</string>
     <string name="hint_cost">Cost</string>
     <string name="hint_description">Description (optional)</string>
     <string name="view_expenses">View Expenses</string>
