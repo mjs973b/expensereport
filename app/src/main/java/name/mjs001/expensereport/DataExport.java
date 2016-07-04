@@ -15,7 +15,7 @@ import java.io.OutputStreamWriter;
  * routine to export data to the sdcard, which user can obtain thru USB.
  */
 public class DataExport implements Runnable {
-    private Activity act;
+    private final Activity act;
 
     public DataExport(Activity act) {
         this.act = act;
@@ -72,7 +72,7 @@ public class DataExport implements Runnable {
     }
 
     private class MsgWrapper implements Runnable {
-        private String msg;
+        private final String msg;
         public MsgWrapper(String msg) {
             this.msg = msg;
         }

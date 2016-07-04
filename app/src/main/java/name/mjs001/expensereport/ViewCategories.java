@@ -60,7 +60,7 @@ public class ViewCategories extends ListActivity {
     private ActionMode aMode;
 
     /** Call back methods for the context menu. */
-    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+    private final ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
 
         /** To temporarily store items' listener when removed. */
         private AdapterView.OnItemClickListener iLstn;

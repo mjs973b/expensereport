@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
  * immutable
  */
 public class ImmutableInt implements Comparable<ImmutableInt> {
-    private int n;
+    private final int n;
 
     public ImmutableInt(int n) {
         this.n = n;

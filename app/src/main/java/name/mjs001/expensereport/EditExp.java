@@ -41,8 +41,8 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
 
     private boolean isValid = false;
     private Expense curExp;
-    private List<User> userList = new ArrayList<User>();
-    private List<Category> catList = new ArrayList<Category>();
+    private final List<User> userList = new ArrayList<User>();
+    private final List<Category> catList = new ArrayList<Category>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

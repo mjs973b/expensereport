@@ -17,10 +17,10 @@ public class CategoryDao {
     private SQLiteDatabase database;
 
     /** Instance of the database helper class. */
-    private ExpenseData dbHelper;
+    private final ExpenseData dbHelper;
 
     // columns
-    private String[] colsToReturn = {
+    private final String[] colsToReturn = {
             ExpenseData.CATEGORY_ID,
             ExpenseData.USER_ID,
             ExpenseData.CATEGORY_NAME

@@ -10,9 +10,9 @@ import android.os.AsyncTask;
  */
 public class ExpenseUtil {
 
-    private Context context;        // for current activity
-    private ExpenseDao dbase;       // database access
-    private Callback callback;      // notification that db changed
+    private final Context context;        // for current activity
+    private final ExpenseDao dbase;       // database access
+    private final Callback callback;      // notification that db changed
 
     public ExpenseUtil(Context ctx, ExpenseDao db, Callback cb) {
         context = ctx;
@@ -24,7 +24,7 @@ public class ExpenseUtil {
      * Class to asynchronously add new expense to database.
      */
     private class AddExpense extends AsyncTask<Void, Void, Expense> {
-        private Expense exp;
+        private final Expense exp;
 
         public AddExpense(Expense exp) {
             this.exp = exp;
@@ -51,7 +51,7 @@ public class ExpenseUtil {
      * Class to asynchronously edit an expense in database.
      */
     private class EditExpense extends AsyncTask<Void, Void, Expense> {
-        private Expense exp;
+        private final Expense exp;
 
         public EditExpense(Expense exp) {
             this.exp = exp;
@@ -77,7 +77,7 @@ public class ExpenseUtil {
      * Class to asynchronously delete an expense from database.
      */
     private class DeleteExpense extends AsyncTask<Void, Void, Expense> {
-        private Expense exp;
+        private final Expense exp;
 
         public DeleteExpense(Expense exp) {
             this.exp = exp;

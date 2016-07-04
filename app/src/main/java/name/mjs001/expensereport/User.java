@@ -9,7 +9,7 @@ import java.io.Serializable;
  */
 public class User implements Serializable, Comparable<User> {
     // data fields; these match the columns in DB
-    private UserId id;
+    private final UserId id;
     private String name;
 
     public User(UserId id, String name) {

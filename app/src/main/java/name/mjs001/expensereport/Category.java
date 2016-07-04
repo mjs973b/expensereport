@@ -10,7 +10,7 @@ public class Category implements Serializable {
     public static final Category SHOW_ALL = new Category(new CatId(SHOW_ALL_CAT_ID), "All Categories");
 
     // fields corresponding to the category table columns
-    private CatId id;
+    private final CatId id;
     private String name;
 
 //    public Category() {

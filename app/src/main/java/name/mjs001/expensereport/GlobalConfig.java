@@ -34,7 +34,7 @@ public class GlobalConfig extends Application {
     private int curViewRecentExp;
 
     /** cached list of all users */
-    private List<User> userList = new ArrayList<User>();
+    private final List<User> userList = new ArrayList<User>();
 
     /**** getters and setters ****/
 
