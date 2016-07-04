@@ -670,7 +670,7 @@ public class ViewCategories extends ListActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu
-        getMenuInflater().inflate(R.menu.view_categories, menu);
+        getMenuInflater().inflate(R.menu.menu_view_categories, menu);
         return true;
     }
 
