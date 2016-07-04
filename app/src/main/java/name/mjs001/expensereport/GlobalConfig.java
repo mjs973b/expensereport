@@ -185,7 +185,7 @@ public class GlobalConfig extends Application {
                 PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_USERID, curUser.toInt());
-        editor.commit();
+        editor.apply();
     }
 
     /** for filtering the expense list */
@@ -194,7 +194,7 @@ public class GlobalConfig extends Application {
                 PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_CATID_VIEW, curViewCatId.toInt());
-        editor.commit();
+        editor.apply();
     }
 
     /** add new expense activity */
@@ -203,7 +203,7 @@ public class GlobalConfig extends Application {
                 PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_CATID_ADD, curAddCatId.toInt());
-        editor.commit();
+        editor.apply();
     }
 
     private void savePrefRecent() {
@@ -211,6 +211,6 @@ public class GlobalConfig extends Application {
                 PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_RECENT, curViewRecentExp);
-        editor.commit();
+        editor.apply();
     }
 }
