@@ -74,7 +74,7 @@ public class ViewUsers extends Activity {
                 public void onClick(View v) {
                     int idx = v.getId();
                     User u2 = gc.getUserList().get(idx);
-                    gc.setCurUser(u2);
+                    gc.setCurUser(u2.getId());
                 }
             });
             button.setOnLongClickListener(new View.OnLongClickListener() {

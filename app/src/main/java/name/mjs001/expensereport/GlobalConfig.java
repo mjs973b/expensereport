@@ -22,7 +22,7 @@ public class GlobalConfig extends Application {
     public static final int VIEW_ALL = 1;
 
     /** Current app user, null on app first use.*/
-    private User curUser;
+    private UserId curUser;
 
     /** current category on expense list activity */
     private CatId curViewCatId;
@@ -40,7 +40,13 @@ public class GlobalConfig extends Application {
 
     /** if returns null, the caller should prompt user to choose from list */
     public User getCurUser() {
-        return curUser;
+        for(int i = 0; i < userList.size(); i++) {
+            // curUser may be null
+            if (userList.get(i).getId().equals(curUser)) {
+                return userList.get(i);
+            }
+        }
+        return null;
     }
 
     /** load or reload our cache from the database */
@@ -53,15 +59,11 @@ public class GlobalConfig extends Application {
         userList.clear();
         userList.addAll(tmpList);
 
-        // if set, confirm the curUser exists in userList (may have just been deleted)
-        if (curUser != null) {
-            for (int i = 0; i < userList.size(); i++) {
-                if (curUser.equals(userList.get(i))) {
-                    return;
-                }
-            }
-            // fix by choosing first user
-            setCurUser(userList.get(0));
+        // verify that the curUser still exists in userList (may have just been deleted)
+        User user = findUserById(curUser);
+        if (user == null) {
+            // fix by choosing first entry in list
+            setCurUser(userList.get(0).getId());
         }
     }
 
@@ -69,14 +71,38 @@ public class GlobalConfig extends Application {
         return userList;
     }
 
-    public void setCurUser(User user) {
+    /**
+     * Change the current expense user. this setting persists across restarts.
+     * Verify the validity of the new userId.
+     *
+     * @param newUserId  the new id
+     */
+    public void setCurUser(UserId newUserId) {
+        // verify that the new id is valid
+        User user = findUserById(newUserId);
         if (user == null) {
-            // curUser does not change
-        } else if (curUser == null || !curUser.equals(user)) {
-            curUser = user;
+            Log.e(LOG_TAG, "setCurUser: invalid userId = " + newUserId.toInt());
+            return;
+        }
+        // persist only if curUser changed
+        if (curUser == null || !curUser.equals(newUserId)) {
+            curUser = newUserId;
             savePrefUser();
         }
-        Log.i(LOG_TAG, "Current user is " + curUser.getName());
+        Log.i(LOG_TAG, "Current user is " + user.getName());
+    }
+
+    /**
+     * Find the user. null may be passed.
+     * @return User or null if not found.
+     */
+    private User findUserById(UserId userId) {
+        for (int i = 0; i < userList.size(); i++) {
+            if (userList.get(i).getId().equals(userId)) {
+                return userList.get(i);
+            }
+        }
+        return null;
     }
 
     public void setViewCatId(CatId cat) {
@@ -91,13 +117,13 @@ public class GlobalConfig extends Application {
         return curViewCatId;
     }
 
-    /** last used category for the expense add activity (s/b per user) */
-    public void setAddCatId(CatId cat) {
-        if (curAddCatId.toInt() != cat.toInt()) {
-            curAddCatId = cat;
-            savePrefAddCat();
-        }
-    }
+//    /** last used category for the expense add activity (s/b per user) */
+//    public void setAddCatId(CatId cat) {
+//        if (curAddCatId.toInt() != cat.toInt()) {
+//            curAddCatId = cat;
+//            savePrefAddCat();
+//        }
+//    }
 
     /** last used category for expense add activity (s/b per user) */
     public CatId getAddCatId() {
@@ -140,7 +166,7 @@ public class GlobalConfig extends Application {
         // first valid user_id is 1
         int userId = sharedPref.getInt(PREF_KEY_USERID, 0);
         if (userId > 0) {
-            setUserById(new UserId(userId));
+            setCurUser(new UserId(userId));
         }
 
         // TODO: confirm is valid for this user
@@ -158,7 +184,7 @@ public class GlobalConfig extends Application {
         SharedPreferences prefs = this.getSharedPreferences(
                 PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(PREF_KEY_USERID, curUser.getId().toInt());
+        editor.putInt(PREF_KEY_USERID, curUser.toInt());
         editor.commit();
     }
 
@@ -186,16 +212,5 @@ public class GlobalConfig extends Application {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_RECENT, curViewRecentExp);
         editor.commit();
-    }
-
-    /** if id does not exist, do nothing */
-    private void setUserById(UserId id) {
-        for(int i = 0; i < userList.size(); i++) {
-            User user = userList.get(i);
-            if (id.equals(user.getId())) {
-                setCurUser(user);
-                break;
-            }
-        }
     }
 }
