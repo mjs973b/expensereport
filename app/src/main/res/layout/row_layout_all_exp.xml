@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:textSize="@dimen/font_small"
         android:layout_weight="0"
-        android:layout_column="0"
         >
     </TextView>
 
@@ -27,7 +26,6 @@
         android:textSize="@dimen/font_medium"
         android:maxLines="1"
         android:ellipsize="end"
-        android:layout_column="1"
         >
     </TextView>
 
@@ -39,7 +37,6 @@
         android:layout_weight="0"
         android:textSize="@dimen/font_medium"
         android:gravity="end"
-        android:layout_column="2"
         >
     </TextView>
 </LinearLayout>
