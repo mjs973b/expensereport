@@ -369,7 +369,7 @@ public class ViewExpensesByTime extends ListActivity {
     private void addExpenseToDb(Expense newExp) {
 
         // config background thread
-        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(), null, null);
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged());
         // update database
         util.addExpense(newExp);
 
@@ -404,7 +404,7 @@ public class ViewExpensesByTime extends ListActivity {
      */
     private void editExpenseInDb(Expense newExp) {
         // config background thread
-        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(), null, null);
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged());
         // update database
         util.editExpense(newExp);
     }
@@ -415,7 +415,7 @@ public class ViewExpensesByTime extends ListActivity {
      */
     private void deleteExpenseInDb(long rowId) {
         // config background thread
-        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged(), null, null);
+        ExpenseUtil util = new ExpenseUtil(this, dbase, new DbaseChanged());
         // update database
         util.deleteExpense(rowId);
     }

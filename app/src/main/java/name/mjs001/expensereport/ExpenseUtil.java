@@ -14,7 +14,7 @@ public class ExpenseUtil {
     private ExpenseDao dbase;       // database access
     private Callback callback;      // notification that db changed
 
-    public ExpenseUtil(Context ctx, ExpenseDao db, Callback cb, UserId userId, CatId catId) {
+    public ExpenseUtil(Context ctx, ExpenseDao db, Callback cb) {
         context = ctx;
         dbase = db;
         callback = cb;
