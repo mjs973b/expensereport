@@ -19,18 +19,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="name.mjs001.expensereport.ViewExpenses"
-            android:configChanges="orientation"
-            android:label="@string/title_activity_view_expenses"
-            android:screenOrientation="portrait"
-            android:parentActivityName="name.mjs001.expensereport.ViewCategories"
-            >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="name.mjs001.expensereport.ViewCategories">
-            </meta-data>
-        </activity>
-        <activity
             android:name="name.mjs001.expensereport.ViewExpensesByTime"
             android:configChanges="orientation"
             android:label="@string/title_view_all_expenses"

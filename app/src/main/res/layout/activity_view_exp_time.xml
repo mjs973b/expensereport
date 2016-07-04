@@ -3,7 +3,7 @@
     style="@style/LinearLayoutStyle1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ViewExpenses">
+    tools:context=".ViewExpensesByTime">
 
     <ScrollView
         android:layout_width="match_parent"
