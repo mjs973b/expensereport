@@ -32,26 +32,36 @@ on the sdcard.
 
 The launcher icon was created by the [Icon8 Web Site](https://icons8.com/)
 
-This code was forked from [simeonge/expensereport](https://github.com/simeonge/expensereport)
-
-His code served as a very useful base to make my own modifications, without having to figure
-out the many android app quirks at the beginning.
+This code was forked from [simeonge/expensereport](https://github.com/simeonge/expensereport).
+His code served as a solid working base to make my own modifications, without having to figure
+out *all* the android app quirks at the beginning.
 
 ##Building
 
-- This app is built with Android Studio 2.1, Gradle 2.1 and SDK 22.
+- I built this app using Android Studio 2.1, Gradle 2.1 and SDK 22.
 - After cloning from github, import in-place as a project (File|New|Import Project)
-- I test on Android 5.1 (API 22).
-- Most recent phones will require that you sign the .apk (using a key that you created.)
-- I side-load the signed .apk to my phone using `adb install release-file.apk` (I had to turn
-off the USB MPT mode for my phone.)
+- I tested on Android 5.1 (API 22).
+- Most recent phones will require that you sign the .apk (using a key that you create yourself.)
+- I side-load the signed .apk to my phone using `adb install release-file.apk` (Note: I also had
+to turn off the USB MPT mode for my phone.)
 
-##Changes from the Fork
+##Change List
 
-- this app removes the item sub-totals and totals (not useful to me)
-- this app shows a date for each item
-- this app allows editting user & category & date for an item
-- this app supports data export
-- this app has more display filtering options
-- I'm experimenting with different algorithms to predict what the user is about to enter.
+###v05
+- refine the User Management activity
+- visually indicate the current user name
+- add more error checks
+
+###v04
+- remove the item sub-totals and totals (not useful to me)
+- show a date for each item
+- allow edit of user & category & date for an item
+- support export of user's data
+- add more display filtering options
+- change icon
+- change package name
+- update to Android Studio 2
+
+###v03
+- fork simeonge's code
 
