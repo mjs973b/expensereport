@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:paddingTop="2dip"
     android:paddingBottom="2dip"
-    android:background="?android:attr/activatedBackgroundIndicator" >
+    >
 
     <TextView
         android:id="@+id/catLabel"
