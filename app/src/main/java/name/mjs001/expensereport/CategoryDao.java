@@ -73,6 +73,7 @@ public class CategoryDao {
         ContentValues cv = new ContentValues();
         cv.put(ExpenseData.CATEGORY_NAME, name);
         cv.put(ExpenseData.USER_ID, us.getId().toInt());
+        @SuppressWarnings("UnusedAssignment")
         int rowId = -1;
         try {
             rowId = (int) database.insert(ExpenseData.CATEGORIES_TABLE, null, cv);

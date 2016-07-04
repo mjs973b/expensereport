@@ -97,6 +97,7 @@ public class ViewUsers extends Activity {
 
     private int dpToPx(int dp) {
         DisplayMetrics displayMetrics = this.getResources().getDisplayMetrics();
+        @SuppressWarnings("UnnecessaryLocalVariable")
         int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
         return px;
     }

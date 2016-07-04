@@ -1,5 +1,7 @@
 package name.mjs001.expensereport;
 
+import android.support.annotation.NonNull;
+
 import java.io.Serializable;
 
 /**
@@ -50,7 +52,7 @@ public class User implements Serializable, Comparable<User> {
         return false;
     }
     @Override
-    public int compareTo(User other) {
+    public int compareTo(@NonNull User other) {
         return id.toInt() - other.id.toInt();
     }
 }

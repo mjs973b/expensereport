@@ -77,9 +77,9 @@ public class ExpenseData extends SQLiteOpenHelper {
      * thrown, all changes are undone and db stays are original version. Must not call
      * startTransaction or endTransaction.
      *
-     * @param db
-     * @param oldVersion
-     * @param newVersion
+     * @param db  the database, open for writing.
+     * @param oldVersion  old db version
+     * @param newVersion  new db version
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

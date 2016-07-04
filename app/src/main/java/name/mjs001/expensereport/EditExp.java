@@ -213,7 +213,7 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
     }
 
     /** populate the userList */
-    private List<User> populateUserList() {
+    private void populateUserList() {
         List<User> list = null;
         UserDao dbase;
         try {
@@ -234,11 +234,10 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
         if (list != null) {
             userList.addAll(list);
         }
-        return userList;
     }
 
     /** populate the catList. Don't replace list object itself because of adapter. */
-    private List<Category> populateCatsList(UserId userId) {
+    private void populateCatsList(UserId userId) {
         Log.i(GlobalConfig.LOG_TAG, "In populateCatsList()");
         List<Category> list = null;
         CategoryDao dbase;
@@ -260,7 +259,6 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
         if (list != null) {
             catList.addAll(list);
         }
-        return catList;
     }
 
     /** if user is changed, we need to reload the category spinner */
@@ -301,7 +299,7 @@ public class EditExp extends Activity implements DatePickerDialog.OnDateSetListe
         public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
             // this user may not be same as current ViewExpenses user
             User user = (User)tvUser.getSelectedItem();
-            ArrayAdapter<String> adapter = (ArrayAdapter)parent.getAdapter();
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>)parent.getAdapter();
             String sDesc = adapter.getItem(pos);
             populateCost(user.getId(), sDesc);
         }

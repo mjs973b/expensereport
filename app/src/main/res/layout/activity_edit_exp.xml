@@ -67,7 +67,7 @@
 
     <Button
         android:id="@+id/butOK"
-        android:layout_width="1in"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:text="@string/ok"
         android:layout_gravity="end"

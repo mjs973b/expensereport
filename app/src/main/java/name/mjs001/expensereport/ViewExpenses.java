@@ -132,7 +132,7 @@ public class ViewExpenses extends ListActivity {
         @Override
         protected List<Expense> doInBackground(Void... params) {
             // retrieve all expenses for the user and category and specified month and year
-            User curUser = gc.getCurUser();
+            //User curUser = gc.getCurUser();
             //return dbase.getExpensesByCat(curUser, curCat);
             return new ArrayList<Expense>();
         }

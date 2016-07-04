@@ -330,8 +330,8 @@ public class ExpenseDao {
      * Find the most-recently entered expense matching user and desc (Note: not latest date)
      * and return the cost field. Return 0 if no match.
      *
-     * @param userId
-     * @param desc
+     * @param userId  the user id to match
+     * @param desc  the description to match
      * @return   cost in cents
      */
     public int getLastCreatedCostByDesc(UserId userId, String desc) {

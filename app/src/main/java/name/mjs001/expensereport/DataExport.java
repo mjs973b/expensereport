@@ -59,7 +59,7 @@ public class DataExport implements Runnable {
             return false;
         } finally {
             if (writer != null) {
-                try { writer.close(); } catch(Exception e2) { }
+                try { writer.close(); } catch(Exception ignored) { }
             }
         }
         String msg = String.format("Exported %d records", row_cnt);
@@ -110,7 +110,7 @@ public class DataExport implements Runnable {
             Log.e(GlobalConfig.LOG_TAG, e.getMessage());
         } finally {
             if (cursor != null) cursor.close();
-            if (db != null) db.close();
+            db.close();
         }
         return row_cnt;
     }
