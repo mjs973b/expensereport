@@ -47,6 +47,11 @@ to turn off the USB MPT mode for my phone.)
 
 ##Change List
 
+###v06
+- add undo for last deleted expense
+- many lint fixes
+- fix blank launch icon text
+
 ###v05
 - refine the User Management activity
 - visually indicate the current user name
